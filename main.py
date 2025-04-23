@@ -87,6 +87,67 @@ class CommentRequest(BaseModel):
     username: str
 
 
+
+def getuserfromemail(email):
+    user_ref = connectDB.collection('NewUser').where('email_address', '==', email).limit(1).get()
+    user_data = {
+            'name':'John Doe'
+        }
+    if not user_ref:
+        return user_data
+    else:
+        user_data = user_ref[0].to_dict()
+        return user_data
+    
+def getuser(user_token):
+    print("inside get user function")
+    user = connectDB.collection('NewUser').document(user_token['user_id'])
+    if not user.get().exists:
+        user_data = {
+            'name':'John Doe'
+        }
+        connectDB.collection('NewUser').document(user_token['user_id']).set(user_data)
+
+    return user
+
+@app.get("/myprofile", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("myprofile.html", {"request": request})
+
+@app.get("/home", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    id_token = request.cookies.get('token')
+    error_message = "No error here"
+    user_token = None
+    user = None
+
+    print("inside get")
+    user_token = validateFirebaseToken(id_token)
+    if not user_token:
+        return templates.TemplateResponse("login.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
+    
+    print("user validated")
+    file_list = []
+    directory_list = []
+
+    blobs = blobList(None)
+    print("after blobs")
+    for blob in blobs:
+        if blob.name[-1] == "/":
+            directory_list.append(blob)
+        else:
+            file_list.append(blob)
+    print("after blob") 
+    user = getuser(user_token).get()
+    return templates.TemplateResponse("login.html", {"request": request, 'user_token':user_token , 'error_message':error_message , 'user_info':user, 'file_list':file_list,'directory_list':directory_list})
+
+
+
 @app.get("/api/detailsofuser/{userEmail}")
 async def fetch_details_of_user(userEmail:str , response_class=JSONResponse):
     print("getting usrr ",userEmail)
@@ -109,3 +170,45 @@ async def fetch_details_of_user(username: str , response_class=JSONResponse):
     else:
         user_data = user_ref[0].to_dict()
         return JSONResponse(content={"user": user_data}, status_code=200)
+    
+@app.post("/updateUsername")
+async def update_username(profile: ProfileUpdate):
+    users_ref = connectDB.collection('NewUser')
+    print("email ",profile.email)
+    query = users_ref.where('email_address', '==', profile.email).stream()
+
+    user_doc = None
+    for doc in query:
+        user_doc = doc
+        break
+
+    if user_doc is None:
+        return {"success": False, "message": "User not found"}
+
+    update_data = {
+        "name": profile.profileName,
+        "Username": profile.username,
+        "bio": profile.bio
+    }
+
+    users_ref.document(user_doc.id).update(update_data)
+    return {"success": True, "message": "Profile updated"}
+
+
+@app.post("/api/initializeuser")
+async def initializeuser(data: EmailRequest):
+    # print("check user ", data)
+    user_ref = connectDB.collection('NewUser').where('email_address', '==', data.email).limit(1).get()
+    if not user_ref:
+        connectDB.collection('NewUser').add({
+                "name": "",
+                "email_address": data.email,
+                "Username": "",
+                "followers_list": [],
+                "following_list": []
+            })
+        print("user created")
+    else:
+        print("user already exist")
+        pass
+    return 0
