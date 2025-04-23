@@ -1,0 +1,14 @@
+{% extends "Navbar.html" %}
+
+{% block content %}
+
+<div>Test
+    <script>
+        async function initPageInHome() {
+            console.log("inside inti")
+        }
+        document.addEventListener('DOMContentLoaded', initPageInHome);
+
+    </script>
+</div>
+{% endblock %}
