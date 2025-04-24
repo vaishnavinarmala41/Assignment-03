@@ -98,7 +98,73 @@ def getuserfromemail(email):
     else:
         user_data = user_ref[0].to_dict()
         return user_data
+
+
+def getUserPosts(username):
+    posts = []
+    posts_ref = connectDB.collection('NewPost')
+    query = posts_ref.where('Username', '==', username).stream()
+    for post in query:
+        posts.append(post.to_dict())
+
+    return posts
+
+def createPost(filename, user, postdescription):
+    post_id = str(uuid.uuid4())  # generate unique post ID
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # format current time
+    connectDB.collection('NewPost').add(
+            {
+    "id": post_id,
+    "Username": user['Username'],
+    "author_email": user['email_address'],
+    "Date": current_time,
+    "media_file": filename,
+    "like_count": 0,
+    "caption": postdescription,
+    "user_comments": []
+})  
+    print("created ")
+
+
+def addDirectory(directory_name):
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+    blob = bucket.blob(directory_name)
+    blob.upload_from_string('', content_type='application/x-www-form-urlencoded;charset=UTF-8')
+
+def addFile(file, user, postdescription):
+    print("inside add file")
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+
+    blob = bucket.blob(file.filename)  # Correct way to get a blob
+    blob.upload_from_file(file.file, content_type=file.content_type)  # Pass file-like object
+    createPost(file.filename, user, postdescription)
+
+def blobList(prefix):
+    print("local_constants.PROJECT_NAME ",local_constants.PROJECT_NAME)
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    return storage_client.list_blobs(local_constants.PROJECT_STORAGE_BUCKET, prefix=prefix)
+
+def downloadBlob(filename):
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+    blob = bucket.get_blob(filename)
+    return blob.download_as_bytes()
     
+
+
+def validateFirebaseToken(id_token):
+    if not id_token:
+        return None
+    user_token = None 
+    try:
+        user_token = google.oauth2.id_token.verify_firebase_token(id_token, firebase_request_adapter)
+    except ValueError as e:
+        print(str(e))
+
+    return user_token
+
 def getuser(user_token):
     print("inside get user function")
     user = connectDB.collection('NewUser').document(user_token['user_id'])
