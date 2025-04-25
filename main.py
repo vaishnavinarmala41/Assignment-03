@@ -214,6 +214,49 @@ async def index(request: Request):
 
 
 
+@app.get("/search", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("search.html", {"request": request})
+
+@app.get("/user/{username}", response_class=HTMLResponse)
+async def renderuserprofile(request: Request, username:str):
+    print("username ",username)
+    return templates.TemplateResponse("friendProfile.html", {"request": request, 'username':username})
+
+@app.get("/followers", response_class=HTMLResponse)
+async def renderfollowers(request: Request):
+    id_token = request.cookies.get('token')
+    error_message = "No error here"
+    user_token = None
+    user = None
+
+    print("inside get")
+    user_token = validateFirebaseToken(id_token)
+    print("inside user toekn ",user_token)
+
+    if not user_token:
+        return templates.TemplateResponse("main-page.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
+    
+    return templates.TemplateResponse("followers.html", {"request": request , 'user_email':user_token['email']})
+
+@app.get("/following", response_class=HTMLResponse)
+async def renderfollowing(request: Request):
+    id_token = request.cookies.get('token')
+    error_message = "No error here"
+    user_token = None
+    user = None
+
+    user_token = validateFirebaseToken(id_token)
+
+    print("inside user toekn ",user_token)
+    if not user_token:
+        return templates.TemplateResponse("main-page.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
+    
+    return templates.TemplateResponse("following.html", {"request": request , 'user_email':user_token['email']})
+
+
+
+
 @app.get("/api/detailsofuser/{userEmail}")
 async def fetch_details_of_user(userEmail:str , response_class=JSONResponse):
     print("getting usrr ",userEmail)
