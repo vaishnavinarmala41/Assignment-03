@@ -442,3 +442,88 @@ async def addCommentToPost(request: Request):
     })
 
     return JSONResponse(content={"message": "Comment added successfully", "new_comment": new_comment})
+
+
+
+@app.get("/api/users")
+async def fetch_all_users():
+    user_ref = connectDB.collection('NewUser')
+    docs = user_ref.stream()
+    users = []
+    
+    for doc in docs:
+        user_data = doc.to_dict()
+        selected_data = {
+            "Username": user_data.get("Username"),
+            "Useremail": user_data.get("email_address"),
+            "UserProfileName":user_data.get("name")
+        }
+        users.append(selected_data)
+    
+    return {"users": users}
+
+
+
+
+
+
+@app.post("/getuserposts", response_class=JSONResponse)
+async def getUserPostsHandler(request: Request, username: str = Form(...)):
+    id_token = request.cookies.get("token")
+    user_token = validateFirebaseToken(id_token)
+
+    if not user_token:
+        return RedirectResponse('/login', status_code=status.HTTP_302_FOUND)
+
+    posts = getUserPosts(username)
+    
+    return JSONResponse(content={"posts": posts})
+
+
+
+@app.get("/api/posts/{username}")
+async def getPostsOfUser(username: str, response_class=JSONResponse):
+    print("getting posts of user")
+    posts_ref = connectDB.collection('NewPost').where('Username', '==', username).get()
+    if not posts_ref:
+        posts = []
+    else:
+        posts = [doc.to_dict() for doc in posts_ref]
+    return JSONResponse(content={"posts": posts}, status_code=200)
+
+    
+@app.post("/getPostsOfFriend")
+async def getPostsOfFriend(data: EmailRequest, response_class=JSONResponse):
+    print("getting posts of user")
+    posts_ref = connectDB.collection('NewPost').where('Username', '==', data.username).get()
+    if not posts_ref:
+        posts = []
+    else:
+        posts = [doc.to_dict() for doc in posts_ref]
+    return JSONResponse(content={"posts": posts}, status_code=200)
+
+    
+
+@app.get("/test", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("test.html", {"request": request})
+
+
+
+@app.post("/addpost")
+async def checkandcreatenewuser(data: EmailRequest):
+    print("check user ", data)
+    user_ref = connectDB.collection('NewUser').where('Username', '==', data.username).limit(1).get()
+    if not user_ref:
+        connectDB.collection('NewUser').add({
+                "name": data.username,
+                "Username":data.username,
+                "followers":[],
+                "following":[],
+                "posts":[]
+            })
+        print("user created")
+    else:
+        print("user already exist")
+        pass
+    return 0
