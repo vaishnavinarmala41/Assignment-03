@@ -527,3 +527,96 @@ async def checkandcreatenewuser(data: EmailRequest):
         print("user already exist")
         pass
     return 0
+
+
+@app.post("/api/follow")
+async def handle_follow_action(data: FollowRequest):
+    try:
+        timestamp = datetime.utcnow().isoformat()
+
+        # Fetch documents
+        user2_query = connectDB.collection('NewUser').where('Username', '==', data.username).limit(1).stream()
+        user1_query = connectDB.collection('NewUser').where('Username', '==', data.currentUserName).limit(1).stream()
+
+        user2_doc = next(user2_query, None)
+        user1_doc = next(user1_query, None)
+
+        if not user1_doc or not user2_doc:
+            raise HTTPException(status_code=404, detail="User(s) not found")
+
+        user2_ref = connectDB.collection('NewUser').document(user2_doc.id)
+        user1_ref = connectDB.collection('NewUser').document(user1_doc.id)
+
+        if data.action == "follow":
+            # user1 follows user2
+            user1_ref.update({
+                "following_list": firestore.ArrayUnion([{
+                    "username": data.username,
+                    "timestamp": timestamp
+                }])
+            })
+            user2_ref.update({
+                "followers_list": firestore.ArrayUnion([{
+                    "username": data.currentUserName,
+                    "timestamp": timestamp
+                }])
+            })
+            message = f"{data.currentUserName} followed {data.username}"
+
+        elif data.action == "unfollow":
+            # Remove specific objects from arrays
+            user1_data = user1_doc.to_dict()
+            user2_data = user2_doc.to_dict()
+
+            updated_following = [f for f in user1_data.get("following_list", []) if f["username"] != data.username]
+            updated_followers = [f for f in user2_data.get("followers_list", []) if f["username"] != data.currentUserName]
+
+            user1_ref.update({"following_list": updated_following})
+            user2_ref.update({"followers_list": updated_followers})
+
+            message = f"{data.currentUserName} unfollowed {data.username}"
+
+        else:
+            raise HTTPException(status_code=400, detail="Invalid action")
+
+        return {"message": message}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+@app.post("/api/feed")
+async def getUser(data: UserRequest):
+    print("fetching user")
+    user_docs = connectDB.collection('NewUser').where('Username', '==', data.username).limit(1).get()
+
+    if not user_docs:
+        return JSONResponse(content={"error": "User not found"}, status_code=404)
+
+    user_doc = user_docs[0]
+    user_data = user_doc.to_dict()
+    current_username = user_data['Username']
+    print("user data ", user_data)
+
+    following_usernames = [f['username'] for f in user_data.get('following_list', [])]
+    all_usernames = following_usernames + [current_username]
+
+    print("all usernames ", all_usernames)
+    all_posts = []
+    for username in all_usernames:
+        posts = connectDB.collection('NewPost') \
+            .where('Username', '==', username) \
+            .get()
+        for post in posts:
+            post_data = post.to_dict()
+            post_data['post_id'] = post.id
+            post_data['Date'] = datetime.strptime(post_data['Date'], "%Y-%m-%d %H:%M:%S")
+            all_posts.append(post_data)
+
+    sorted_posts = sorted(all_posts, key=lambda x: x['Date'], reverse=True)
+    top_50_posts = sorted_posts[:50]
+
+    for post in top_50_posts:
+        post['Date'] = post['Date'].strftime("%Y-%m-%d %H:%M:%S")
+    print("top_50_posts ", top_50_posts)
+    return JSONResponse(content=top_50_posts)
