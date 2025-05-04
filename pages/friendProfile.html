@@ -412,7 +412,6 @@
                             <div class="flex items-center">
                                 <div id="modalUserImage"
                                     class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold mr-3">
-                                    <!-- User initials -->
                                 </div>
                                 <div>
                                     <div id="modalUsername" class="font-semibold">username</div>
@@ -428,38 +427,43 @@
                         </div>
                     </div>
 
-                    <!-- Description -->
                     <div class="p-4 border-b">
                         <p id="modalDescription" class="text-sm">Post description</p>
                         <p id="modalDate" class="text-xs text-gray-500 mt-1">Date</p>
                     </div>
 
-                    <!-- Comments -->
                     <div class="flex-grow overflow-y-auto p-4 border-b">
                         <h4 class="font-semibold mb-3">Comments</h4>
                         <div id="modalComments" class="space-y-3">
-                            <!-- Comments will be populated here -->
+                        </div>
+                        <div id="showMoreComments" class="hidden mt-3 text-center">
+                            <button class="text-sm text-pink-600 hover:text-pink-700">Show more comments</button>
                         </div>
                         <div id="noComments" class="hidden text-center py-4">
                             <p class="text-sm text-gray-500">No comments yet</p>
                         </div>
                     </div>
 
-                    <!-- Add comment form -->
                     <div class="p-4">
-                        <form id="commentForm" class="flex">
-                            <input type="text" id="commentInput" placeholder="Add a comment..."
-                                class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-pink-500 focus:border-pink-500">
-                            <button type="submit"
-                                class="px-4 py-2 bg-pink-600 text-white rounded-r-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
-                                Post
-                            </button>
+                        <form id="commentForm" class="flex flex-col">
+                            <div class="flex mb-1">
+                                <input type="text" id="commentInput" placeholder="Add a comment..." maxlength="200"
+                                    class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-pink-500 focus:border-pink-500">
+                                <button type="submit"
+                                    class="px-4 py-2 bg-pink-600 text-white rounded-r-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                                    Post
+                                </button>
+                            </div>
+                            <div class="text-xs text-right text-gray-500">
+                                <span id="commentCharCount">0</span>/200 characters
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <script>
         // Global variables
@@ -625,6 +629,7 @@
         // Fetch user posts
         async function fetchUserPosts(username) {
             try {
+                console.log("user nae  ", username)
                 const response = await fetch(`/api/posts/${username}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch user posts');
@@ -632,6 +637,7 @@
 
                 const postsData = await response.json();
                 console.log("posts data ", postsData)
+                updatePostsGridUI(postsData.posts)
                 return postsData.posts;
             } catch (error) {
                 console.error("Error fetching user posts:", error);
@@ -833,9 +839,9 @@
 
         // Open post modal
         async function openPostModal(post) {
-            currentPostId = post.post_id;
+            currentPostId = post.id;
 
-            // Set modal content
+            // Set modal content    
             document.getElementById('modalUsername').textContent = post.Username;
             document.getElementById('modalDescription').textContent = post.description || 'No description';
             document.getElementById('modalDate').textContent = formatDate(post.Date);
@@ -853,41 +859,43 @@
                 document.getElementById('modalImage').src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%22%20height%3D%22100%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22100%22%20height%3D%22100%22%2F%3E%3Ctext%20fill%3D%22%23888%22%20font-family%3D%22sans-serif%22%20font-size%3D%2212%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3EImage%20not%20available%3C%2Ftext%3E%3C%2Fsvg%3E';
             }
 
-            // Update comments
-            updateCommentsUI(post.comments);
+            updateCommentsUI(post.user_comments);
 
-            // Show modal
             document.getElementById('postModal').classList.add('show');
             document.body.style.overflow = 'hidden'; // Prevent scrolling
         }
 
-        // Close post modal
         function closePostModal() {
             document.getElementById('postModal').classList.remove('show');
             document.body.style.overflow = ''; // Re-enable scrolling
             currentPostId = null;
         }
 
-        // Update comments UI
+
         function updateCommentsUI(comments) {
+            console.log("update comments ui ", comments)
             const commentsContainer = document.getElementById('modalComments');
             const noComments = document.getElementById('noComments');
+            const showMoreComments = document.getElementById('showMoreComments');
 
             if (!comments || comments.length === 0) {
                 commentsContainer.innerHTML = '';
                 noComments.classList.remove('hidden');
+                showMoreComments.classList.add('hidden');
                 return;
             }
 
-            // Sort comments by date (newest first)
             comments.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
-            // Create comment elements
             commentsContainer.innerHTML = '';
-            comments.forEach(comment => {
+
+            const showAll = comments.length <= 5;
+            const displayComments = showAll ? comments : comments.slice(0, 5);
+
+            displayComments.forEach(comment => {
                 const commentElement = document.createElement('div');
                 commentElement.className = 'flex';
-
+                console.log("comment ", comment)
                 commentElement.innerHTML = `
                     <div class="flex-shrink-0 mr-2">
                         <div class="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
@@ -906,8 +914,20 @@
                 commentsContainer.appendChild(commentElement);
             });
 
+            if (comments.length > 5) {
+                showMoreComments.classList.remove('hidden');
+                const showMoreBtn = showMoreComments.querySelector('button');
+                showMoreBtn.onclick = () => {
+                    updateCommentsUI(comments);
+                    showMoreComments.classList.add('hidden');
+                };
+            } else {
+                showMoreComments.classList.add('hidden');
+            }
+
             noComments.classList.add('hidden');
         }
+
 
         // Format date
         function formatDate(dateString) {
@@ -935,6 +955,8 @@
         // Add comment
         async function addComment(postId, comment) {
             try {
+
+                console.log("inside add comment ")
                 const response = await fetch('/api/comment', {
                     method: 'POST',
                     headers: {
@@ -943,7 +965,8 @@
                     credentials: 'include',
                     body: JSON.stringify({
                         post_id: postId,
-                        comment: comment
+                        comment: comment,
+                        username: loggedInUserDetails.Username
                     })
                 });
 
@@ -953,13 +976,19 @@
 
                 const result = await response.json();
 
-                // Refresh post data
+                // fetchUserPosts()
+                console.log("currnet usrr name ", currentUsername)
                 const updatedPosts = await fetchUserPosts(currentUsername);
+                closePostModal()
+
                 if (updatedPosts) {
                     currentPosts = updatedPosts;
-                    const currentPost = currentPosts.find(p => p.post_id === postId);
+                    console.log("current posts ", currentPosts)
+                    const currentPost = currentPosts.find(p => p.id === postId);
                     if (currentPost) {
-                        updateCommentsUI(currentPost.comments);
+                        console.log("currentPost ", currentPost)
+                        updateCommentsUI(currentPost.user_comments);
+
                     }
                 }
 
@@ -1051,11 +1080,11 @@
             // Store data
             currentUserData = userData;
             currentPosts = postsData || [];
-
+            console.log("current posts ", currentPosts)
             // Update UI
             updateProfileUI(userData);
             updatePostsGridUI(currentPosts);
-
+            // updateCommentsUI()
             // Set up event listeners
             document.getElementById('closeModal').addEventListener('click', closePostModal);
             document.getElementById('postModal').addEventListener('click', (event) => {
@@ -1069,7 +1098,7 @@
 
                 const commentInput = document.getElementById('commentInput');
                 const comment = commentInput.value.trim();
-
+                console.log("insdie submit form ", comment, currentPostId)
                 if (!comment || !currentPostId) {
                     return;
                 }

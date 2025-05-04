@@ -217,7 +217,12 @@
     <div id="friendsModal" class="friends-modal">
         <div class="p-4">
             <div class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3>
+                <!-- <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3> -->
+                <div class="flex justify-between">
+
+                    <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3>
+                    <h3 class="cursor-pointer text-red-500" id="closeSearchForm">X</h3>
+                </div>
                 <div class="mt-2 relative">
                     <input type="text" id="friendSearch" placeholder="Search by name..."
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
@@ -837,6 +842,7 @@
             const friendSearch = document.getElementById('friendSearch');
             const homeBtn = document.getElementById('homeBtn');
             const signoutBtn = document.getElementById('signoutBtn');
+            const closeSearchForm = document.getElementById('closeSearchForm')
 
 
             friendsBtn.addEventListener('click', () => {
@@ -844,6 +850,12 @@
                 friendsModal.style.display = 'block'
             });
 
+
+            closeSearchForm.addEventListener('click', (event) => {
+
+                friendsModal.style.display = 'none'
+
+            });
             document.addEventListener('click', (event) => {
                 if (!friendsModal.contains(event.target) && event.target !== friendsBtn) {
                     friendsModal.classList.remove('show');

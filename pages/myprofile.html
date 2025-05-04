@@ -965,6 +965,7 @@
             noComments.classList.add('hidden');
         }
 
+
         function updateAllCommentsUI(comments) {
             const commentsContainer = document.getElementById('modalComments');
 
@@ -1038,6 +1039,8 @@
                 const result = await response.json();
 
                 const updatedPosts = await fetchUserPosts();
+                closePostModal();
+
                 if (updatedPosts) {
                     currentPosts = updatedPosts;
                     const currentPost = currentPosts.find(p => p.post_id === postId);
@@ -1113,10 +1116,10 @@
 
 
 
-            currentPosts = postsData || [];
+            // currentPosts = postsData || [];
 
             updateProfileUI(userData);
-            updatePostsGridUI(currentPosts);
+            // updatePostsGridUI(currentPosts);
 
             document.getElementById('closeModal').addEventListener('click', closePostModal);
             document.getElementById('postModal').addEventListener('click', (event) => {
@@ -1134,6 +1137,7 @@
                 if (!comment || !currentPostId) {
                     return;
                 }
+                console.log("isnide comment ")
                 const result = await addComment(currentPostId, comment, loggedInUsername);
                 if (result) {
                     commentInput.value = '';
@@ -1215,7 +1219,8 @@
                         const updatedPosts = await fetchUserPosts();
                         if (updatedPosts) {
                             currentPosts = updatedPosts;
-                            updatePostsGridUI(currentPosts);
+                            // updatePostsGridUI(currentPosts);
+                            fetchUserPosts()
 
                             document.getElementById('postsCount').textContent = currentPosts.length;
                         }
@@ -1227,9 +1232,6 @@
                 } catch (error) {
                     console.error('Error creating post:', error);
                     alert('An error occurred. Please try again.');
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
                 }
             });
         }
