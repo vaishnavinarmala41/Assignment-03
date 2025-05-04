@@ -177,8 +177,8 @@ async def index(request: Request):
         else:
             file_list.append(blob)
     print("after blob") 
-    user = getuser(user_token).get()
-    return templates.TemplateResponse("login.html", {"request": request, 'user_token':user_token , 'error_message':error_message , 'user_info':user, 'file_list':file_list,'directory_list':directory_list})
+    # user = getuser(user_token).get()
+    return templates.TemplateResponse("login.html", {"request": request, 'user_token':user_token , 'error_message':error_message , 'file_list':file_list,'directory_list':directory_list})
 
 
 
@@ -237,9 +237,9 @@ async def fetch_details_of_user_username(username: str , response_class=JSONResp
 @app.post("/updateUsername")
 async def update_username(profile: ProfileUpdate):
     users_ref = connectDB.collection('User')
-    print("email ",profile.email)
-    query = users_ref.where('email_address', '==', profile.email).stream()
 
+    # Find the current user by email
+    query = users_ref.where('email_address', '==', profile.email).stream()
     user_doc = None
     for doc in query:
         user_doc = doc
@@ -248,6 +248,12 @@ async def update_username(profile: ProfileUpdate):
     if user_doc is None:
         return {"success": False, "message": "User not found"}
 
+    username_query = users_ref.where('Username', '==', profile.username).stream()
+    for doc in username_query:
+        if doc.id != user_doc.id:
+            return {"success": False, "message": "Username already taken"}
+
+    # Update user profile
     update_data = {
         "name": profile.profileName,
         "Username": profile.username,
@@ -257,10 +263,8 @@ async def update_username(profile: ProfileUpdate):
     users_ref.document(user_doc.id).update(update_data)
     return {"success": True, "message": "Profile updated"}
 
-
 @app.post("/api/initializeuser")
 async def initializeuser(data: EmailRequest):
-    # print("check user ", data)
     user_ref = connectDB.collection('User').where('email_address', '==', data.email).limit(1).get()
     if not user_ref:
         connectDB.collection('User').add({

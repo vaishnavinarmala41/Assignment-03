@@ -921,29 +921,27 @@
                 bioCharCount.classList.remove('text-red-500');
             }
         }
-
         async function handleSubmit() {
-
             const profileData = {
-                profileName: document.getElementById('profileName').value,
-                username: document.getElementById('username').value,
-                bio: document.getElementById('bio').value,
+                profileName: document.getElementById('profileName').value.trim(),
+                username: document.getElementById('username').value.trim(),
+                bio: document.getElementById('bio').value.trim(),
                 email: loggedInUserEmail
             };
-            console.log("profile data ", profileData)
+
             if (!profileData.profileName || !profileData.username) {
                 alert('Profile name and username are required');
                 return;
             }
 
-            if (bioTextarea.value.length > 150) {
+            if (profileData.bio.length > 150) {
                 alert('Bio must be 150 characters or less');
                 return;
             }
 
             try {
                 console.log('Submitting profile data:', profileData);
-                const updateUsernameResponse = await fetch("/updateUsername", {
+                const response = await fetch("/updateUsername", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -951,11 +949,12 @@
                     body: JSON.stringify(profileData),
                 });
 
+                const result = await response.json();
 
-                if (updateUsernameResponse.ok) {
-
+                if (response.ok && result.success) {
                     closeModal();
-
+                } else {
+                    alert(result.message || 'Failed to update profile. Please try again.');
                 }
 
             } catch (error) {
@@ -963,7 +962,6 @@
                 alert('Failed to update profile. Please try again.');
             }
         }
-
 
 
         closeModalBtn.addEventListener('click', closeModal);
