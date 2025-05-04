@@ -234,8 +234,8 @@ async def renderfollowers(request: Request):
     user_token = validateFirebaseToken(id_token)
     print("inside user toekn ",user_token)
 
-    if not user_token:
-        return templates.TemplateResponse("main-page.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
+    # if not user_token:
+    #     return templates.TemplateResponse("login.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
     
     return templates.TemplateResponse("followers.html", {"request": request , 'user_email':user_token['email']})
 
@@ -248,9 +248,9 @@ async def renderfollowing(request: Request):
 
     user_token = validateFirebaseToken(id_token)
 
-    print("inside user toekn ",user_token)
-    if not user_token:
-        return templates.TemplateResponse("main-page.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
+    # print("inside user toekn ",user_token)
+    # if not user_token:
+    #     return templates.TemplateResponse("login.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
     
     return templates.TemplateResponse("following.html", {"request": request , 'user_email':user_token['email']})
 

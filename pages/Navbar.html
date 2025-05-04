@@ -134,7 +134,12 @@
     <div id="friendsModal" class="friends-modal">
         <div class="p-4">
             <div class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3>
+                <!-- <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3> -->
+                <div class="flex justify-between">
+
+                    <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3>
+                    <h3 class="cursor-pointer text-red-500" id="closeSearchForm">X</h3>
+                </div>
                 <div class="mt-2 relative">
                     <input type="text" id="friendSearch" placeholder="Search by name..."
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
@@ -227,126 +232,128 @@
                 </div>
             </div>
         </div>
-
-        <script>
-            // User session variables
-            let userEmailInNavbar = "";
-            let allUsers = [];
-            let details_of_user = ""
+    </div>
 
 
-            // Get DOM elements
-            // const editProfileBtn = document.getElementById('editProfileBtn');
-            const profileEditModal = document.getElementById('profileEditModal');
-            const closeModalBtn = document.getElementById('closeModalBtn');
-            const cancelBtn = document.getElementById('cancelBtn');
-            const profileEditForm = document.getElementById('profileEditForm');
-            const bioTextarea = document.getElementById('bio');
-            const bioCharCount = document.getElementById('bioCharCount');
-            // JWT and session handling functions
-            function parseJWT(jwtToken) {
-                try {
-                    const base64Payload = jwtToken.split('.')[1];
-                    return JSON.parse(atob(base64Payload));
-                } catch (err) {
-                    return {};
+    <script>
+        // User session variables
+        let userEmailInNavbar = "";
+        let allUsers = [];
+        let details_of_user = ""
+
+
+        // Get DOM elements
+        // const editProfileBtn = document.getElementById('editProfileBtn');
+        const profileEditModal = document.getElementById('profileEditModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const profileEditForm = document.getElementById('profileEditForm');
+        const bioTextarea = document.getElementById('bio');
+        const bioCharCount = document.getElementById('bioCharCount');
+        // JWT and session handling functions
+        function parseJWT(jwtToken) {
+            try {
+                const base64Payload = jwtToken.split('.')[1];
+                return JSON.parse(atob(base64Payload));
+            } catch (err) {
+                return {};
+            }
+        }
+
+        function extractTokenFromCookies(cookies) {
+            return cookies
+                .split(';')
+                .map(cookie => cookie.trim().split('='))
+                .find(([key]) => key === 'token')?.[1] || "";
+        }
+
+        async function verifyUserSession() {
+            const authToken = extractTokenFromCookies(document.cookie);
+            if (!authToken) {
+                window.location.href = "/";
+                return;
+            }
+            userEmailInNavbar = parseJWT(authToken).email || "User";
+            // console.log("user email in index ", userEmailInNavbar);
+
+            initializeuser(userEmailInNavbar)
+            fetchUserDetails(userEmailInNavbar)
+
+            // Update UI with user info
+            document.getElementById('profileBtn').addEventListener('click', () => {
+                window.location.href = `/myprofile`;
+            });
+
+
+        }
+
+
+        async function fetchUserDetails(userEmail) {
+            // console.log("insdei fetch user detials ", userEmail)
+
+            const details_of_user_response = await fetch(`/api/detailsofuser/${userEmail}`)
+            if (details_of_user_response.ok) {
+                const details_of_user_json = await details_of_user_response.json();
+                details_of_user = details_of_user_json.user;
+                // console.log("details_of_user ", details_of_user)
+                if (details_of_user.Username == '') {
+                    openModal()
                 }
             }
+        }
+        async function initializeuser(userEmail) {
+            // console.log("insdei fetch user detials ", userEmail)
+            const details_of_user = await fetch(`/api/initializeuser`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }
+                , body: JSON.stringify({ 'email': userEmail })
+            })
 
-            function extractTokenFromCookies(cookies) {
-                return cookies
-                    .split(';')
-                    .map(cookie => cookie.trim().split('='))
-                    .find(([key]) => key === 'token')?.[1] || "";
-            }
-
-            async function verifyUserSession() {
-                const authToken = extractTokenFromCookies(document.cookie);
-                if (!authToken) {
-                    window.location.href = "/";
-                    return;
-                }
-                userEmailInNavbar = parseJWT(authToken).email || "User";
-                // console.log("user email in index ", userEmailInNavbar);
-
-                initializeuser(userEmailInNavbar)
-                fetchUserDetails(userEmailInNavbar)
-
-                // Update UI with user info
-                document.getElementById('profileBtn').addEventListener('click', () => {
-                    window.location.href = `/myprofile`;
-                });
+        }
 
 
-            }
-
-
-            async function fetchUserDetails(userEmail) {
-                // console.log("insdei fetch user detials ", userEmail)
-
-                const details_of_user_response = await fetch(`/api/detailsofuser/${userEmail}`)
-                if (details_of_user_response.ok) {
-                    const details_of_user_json = await details_of_user_response.json();
-                    details_of_user = details_of_user_json.user;
-                    // console.log("details_of_user ", details_of_user)
-                    if (details_of_user.Username == '') {
-                        openModal()
-                    }
-                }
-            }
-            async function initializeuser(userEmail) {
-                // console.log("insdei fetch user detials ", userEmail)
-                const details_of_user = await fetch(`/api/initializeuser`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }
-                    , body: JSON.stringify({ 'email': userEmail })
-                })
-
-            }
-
-
-            // Fetch all users for search functionality
-            async function fetchAllUsers() {
-                try {
-                    // Replace with your actual API endpoint
-                    const response = await fetch('/api/users');
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch users');
-                    }
-
-                    const allUsersJson = await response.json();
-                    allUsers = allUsersJson.users
-                    // console.log("Fetched users:", allUsers);
-                } catch (error) {
-                    console.error("Error fetching users:", error);
-                    allUsers = []; // Set to empty array on error
-                }
-            }
-
-            // Filter users based on search term (profileName only)
-            function filterUsers(searchTerm) {
-                if (!searchTerm) return [];
-                console.log("search terms ", searchTerm)
-
-                searchTerm = searchTerm.toLowerCase();
-                return allUsers.filter(user =>
-                    user.UserProfileName.toLowerCase().includes(searchTerm)
-                );
-            }
-
-
-
-            // Render search results
-            function renderSearchResults(results) {
-                const searchResultsContainer = document.getElementById('searchResults');
-                console.log("results ", results)
-                if (results.length === 0) {
-                    searchResultsContainer.innerHTML = '<div class="text-sm text-gray-500">No users found</div>';
-                    return;
+        // Fetch all users for search functionality
+        async function fetchAllUsers() {
+            try {
+                // Replace with your actual API endpoint
+                const response = await fetch('/api/users');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users');
                 }
 
-                let html = '';
-                results.forEach(user => {
-                    html += `
+                const allUsersJson = await response.json();
+                allUsers = allUsersJson.users
+                // console.log("Fetched users:", allUsers);
+            } catch (error) {
+                console.error("Error fetching users:", error);
+                allUsers = []; // Set to empty array on error
+            }
+        }
+
+        // Filter users based on search term (profileName only)
+        function filterUsers(searchTerm) {
+            if (!searchTerm) return [];
+            console.log("search terms ", searchTerm)
+
+            searchTerm = searchTerm.toLowerCase();
+            return allUsers.filter(user =>
+                user.UserProfileName.toLowerCase().includes(searchTerm)
+            );
+        }
+
+
+
+        // Render search results
+        function renderSearchResults(results) {
+            const searchResultsContainer = document.getElementById('searchResults');
+            console.log("results ", results)
+            if (results.length === 0) {
+                searchResultsContainer.innerHTML = '<div class="text-sm text-gray-500">No users found</div>';
+                return;
+            }
+
+            let html = '';
+            results.forEach(user => {
+                html += `
                 <div class="user-item p-2 hover:bg-gray-100 rounded cursor-pointer" data-username="${user.Username}">
                     <div class="flex items-center">
                         <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mr-3 flex-shrink-0"></div>
@@ -357,188 +364,189 @@
                     </div>
                 </div>
                 `;
-                });
-
-                searchResultsContainer.innerHTML = html;
-
-                // Add click event listeners to user items
-                document.querySelectorAll('.user-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const username = item.getAttribute('data-username');
-                        window.location.href = `/user/${username}`;
-                    });
-                });
-            }
-
-            // Initialize the page
-            async function initPage() {
-                await verifyUserSession();
-                await fetchAllUsers();
-
-                // Set up event listeners
-                const friendsBtn = document.getElementById('friendsBtn');
-                const friendsModal = document.getElementById('friendsModal');
-                const friendSearch = document.getElementById('friendSearch');
-                const homeBtn = document.getElementById('homeBtn');
-                const signoutBtn = document.getElementById('signoutBtn');
-
-
-                // Friends button toggle modal
-                friendsBtn.addEventListener('click', () => {
-                    console.log("button clicked")
-                    friendsModal.style.display = 'block'
-                });
-
-                // Close modal when clicking outside
-                document.addEventListener('click', (event) => {
-                    if (!friendsModal.contains(event.target) && event.target !== friendsBtn) {
-                        friendsModal.classList.remove('show');
-                    }
-                });
-
-                // Search functionality
-                friendSearch.addEventListener('input', (e) => {
-                    const searchTerm = e.target.value;
-                    const results = filterUsers(searchTerm);
-                    renderSearchResults(results);
-                });
-
-                // Home button
-                homeBtn.addEventListener('click', () => {
-                    window.location.href = '/home';
-                });
-
-                // Sign out button
-                signoutBtn.addEventListener('click', () => {
-                    // Clear the token cookie
-                    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                    // Redirect to login page
-                    window.location.href = '/';
-                });
-            }
-
-            // Load content into the content section
-            function loadContent(htmlContent) {
-                document.getElementById('contentSection').innerHTML = htmlContent;
-            }
-
-            // Initialize when DOM is loaded
-            document.addEventListener('DOMContentLoaded', initPage);
-
-            // Make functions available globally for child pages
-            window.loadContent = loadContent;
-            window.userEmailInNavbar = userEmailInNavbar;
-
-
-            // Function to open the modal
-            function openModal() {
-                profileEditModal.classList.add('show');
-                document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
-            }
-
-            // Function to close the modal
-            function closeModal() {
-                profileEditModal.classList.remove('show');
-                document.body.style.overflow = ''; // Re-enable scrolling
-            }
-
-            // Update character count for bio
-            function updateCharCount() {
-                const maxLength = 150;
-                const currentLength = bioTextarea.value.length;
-                const remaining = maxLength - currentLength;
-                bioCharCount.textContent = remaining;
-
-                if (remaining < 0) {
-                    bioCharCount.classList.add('text-red-500');
-                } else {
-                    bioCharCount.classList.remove('text-red-500');
-                }
-            }
-
-            // Handle form submission
-            async function handleSubmit() {
-                // event.preventDefault();
-                // console.log("insde hangle submit")
-                // Get form data
-                // const formData = new FormData(profileEditForm);
-                const profileData = {
-                    profileName: document.getElementById('profileName').value,
-                    username: document.getElementById('username').value,
-                    bio: document.getElementById('bio').value,
-                    email: userEmailInNavbar
-                };
-                console.log("profile data ", profileData)
-                // Validate form data
-                if (!profileData.profileName || !profileData.username) {
-                    alert('Profile name and username are required');
-                    return;
-                }
-
-                if (bioTextarea.value.length > 150) {
-                    alert('Bio must be 150 characters or less');
-                    return;
-                }
-
-                try {
-                    // In a real app, you would send this data to your server
-                    console.log('Submitting profile data:', profileData);
-                    const updateUsernameResponse = await fetch("/updateUsername", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(profileData),
-                    });
-
-                    // const updateUsernameResponse = await fetch("/updateUsername", { profileData: profileData })
-                    // Simulate API call
-                    // await new Promise(resolve => setTimeout(resolve, 500));
-                    if (updateUsernameResponse.ok) {
-
-                        // Update the UI with the new data
-                        // document.querySelector('h2.text-xl').textContent = profileData.profileName;
-                        // document.querySelector('p.text-gray-600').textContent = `@${profileData.username}`;
-                        // document.querySelector('p.text-gray-700').textContent = profileData.bio;
-
-                        // // Update initials in avatar
-                        // const initials = profileData.profileName.split(' ').map(name => name[0]).join('').toUpperCase();
-                        // document.querySelector('.w-32.h-32.rounded-full').textContent = initials;
-                        // document.querySelector('.w-24.h-24.rounded-full').textContent = initials;
-
-                        // Close the modal
-                        closeModal();
-
-                    }
-                    // Show success message
-                    // alert('Profile updated successfully!');
-                } catch (error) {
-                    console.error('Error updating profile:', error);
-                    alert('Failed to update profile. Please try again.');
-                }
-            }
-
-            // Add event listeners
-            // editProfileBtn.addEventListener('click', openModal);
-            closeModalBtn.addEventListener('click', closeModal);
-            cancelBtn.addEventListener('click', closeModal);
-            profileEditModal.addEventListener('click', (event) => {
-                if (event.target === profileEditModal) {
-                    closeModal();
-                }
             });
-            bioTextarea.addEventListener('input', updateCharCount);
-            profileEditForm.addEventListener('submit', handleSubmit);
 
-            // Initialize character count
-            updateCharCount();
+            searchResultsContainer.innerHTML = html;
 
-            // If this is being used with the base.html template, you would use:
-            // document.addEventListener('DOMContentLoaded', () => {
-            //     const content = document.querySelector('body').innerHTML;
-            //     window.loadContent(content);
-            // });
-        </script>
+            // Add click event listeners to user items
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const username = item.getAttribute('data-username');
+                    window.location.href = `/user/${username}`;
+                });
+            });
+        }
+
+        // Initialize the page
+        async function initPage() {
+            await verifyUserSession();
+            await fetchAllUsers();
+
+            // Set up event listeners
+            const friendsBtn = document.getElementById('friendsBtn');
+            const friendsModal = document.getElementById('friendsModal');
+            const friendSearch = document.getElementById('friendSearch');
+            const homeBtn = document.getElementById('homeBtn');
+            const signoutBtn = document.getElementById('signoutBtn');
+            const closeSearchForm = document.getElementById('closeSearchForm')
+
+
+            // Friends button toggle modal
+            friendsBtn.addEventListener('click', () => {
+                console.log("button clicked")
+                friendsModal.style.display = 'block'
+            });
+
+            // Close modal when clicking outside
+            closeSearchForm.addEventListener('click', (event) => {
+
+                friendsModal.style.display = 'none'
+
+            });
+
+            // Search functionality
+            friendSearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value;
+                const results = filterUsers(searchTerm);
+                renderSearchResults(results);
+            });
+
+            // Home button
+            homeBtn.addEventListener('click', () => {
+                window.location.href = '/home';
+            });
+
+            // Sign out button
+            signoutBtn.addEventListener('click', () => {
+                // Clear the token cookie
+                document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                // Redirect to login page
+                window.location.href = '/';
+            });
+        }
+
+        // Load content into the content section
+        function loadContent(htmlContent) {
+            document.getElementById('contentSection').innerHTML = htmlContent;
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initPage);
+
+        // Make functions available globally for child pages
+        window.loadContent = loadContent;
+        window.userEmailInNavbar = userEmailInNavbar;
+
+
+        // Function to open the modal
+        function openModal() {
+            profileEditModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            profileEditModal.classList.remove('show');
+            document.body.style.overflow = ''; // Re-enable scrolling
+        }
+
+        // Update character count for bio
+        function updateCharCount() {
+            const maxLength = 150;
+            const currentLength = bioTextarea.value.length;
+            const remaining = maxLength - currentLength;
+            bioCharCount.textContent = remaining;
+
+            if (remaining < 0) {
+                bioCharCount.classList.add('text-red-500');
+            } else {
+                bioCharCount.classList.remove('text-red-500');
+            }
+        }
+
+        // Handle form submission
+        async function handleSubmit() {
+            // event.preventDefault();
+            // console.log("insde hangle submit")
+            // Get form data
+            // const formData = new FormData(profileEditForm);
+            const profileData = {
+                profileName: document.getElementById('profileName').value,
+                username: document.getElementById('username').value,
+                bio: document.getElementById('bio').value,
+                email: userEmailInNavbar
+            };
+            console.log("profile data ", profileData)
+            // Validate form data
+            if (!profileData.profileName || !profileData.username) {
+                alert('Profile name and username are required');
+                return;
+            }
+
+            if (bioTextarea.value.length > 150) {
+                alert('Bio must be 150 characters or less');
+                return;
+            }
+
+            try {
+                // In a real app, you would send this data to your server
+                console.log('Submitting profile data:', profileData);
+                const updateUsernameResponse = await fetch("/updateUsername", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(profileData),
+                });
+
+                // const updateUsernameResponse = await fetch("/updateUsername", { profileData: profileData })
+                // Simulate API call
+                // await new Promise(resolve => setTimeout(resolve, 500));
+                if (updateUsernameResponse.ok) {
+
+                    // Update the UI with the new data
+                    // document.querySelector('h2.text-xl').textContent = profileData.profileName;
+                    // document.querySelector('p.text-gray-600').textContent = `@${profileData.username}`;
+                    // document.querySelector('p.text-gray-700').textContent = profileData.bio;
+
+                    // // Update initials in avatar
+                    // const initials = profileData.profileName.split(' ').map(name => name[0]).join('').toUpperCase();
+                    // document.querySelector('.w-32.h-32.rounded-full').textContent = initials;
+                    // document.querySelector('.w-24.h-24.rounded-full').textContent = initials;
+
+                    // Close the modal
+                    closeModal();
+
+                }
+                // Show success message
+                // alert('Profile updated successfully!');
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Failed to update profile. Please try again.');
+            }
+        }
+
+        // Add event listeners
+        // editProfileBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        profileEditModal.addEventListener('click', (event) => {
+            if (event.target === profileEditModal) {
+                closeModal();
+            }
+        });
+        bioTextarea.addEventListener('input', updateCharCount);
+        profileEditForm.addEventListener('submit', handleSubmit);
+
+        // Initialize character count
+        updateCharCount();
+
+        // If this is being used with the base.html template, you would use:
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     const content = document.querySelector('body').innerHTML;
+        //     window.loadContent(content);
+        // });
+    </script>
 
 
 </body>
