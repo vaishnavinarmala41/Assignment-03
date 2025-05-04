@@ -28,35 +28,6 @@ connectDB = firestore.Client()
 firebase_request_adapter = requests.Request()
 
 
-class Follower(BaseModel):
-    username: str
-
-class Following(BaseModel):
-    username: str
-
-class Comment(BaseModel):
-    username: str
-    comment: str
-    time: str 
-
-class Post(BaseModel):
-    post_id: str
-    Username: str             
-    Date: str                 
-    filename: str
-    likes: int
-    description: str
-    comments: Optional[List[Comment]] = []
-
-class User(BaseModel):
-    name: str
-    Username: str
-    followers: Optional[List[Follower]] = []
-    following: Optional[List[Following]] = []
-    posts: Optional[List[str]] = []  
-    joinedDate:str
-
-
 class EmailRequest(BaseModel):
     email:str
  
@@ -70,16 +41,16 @@ class UsernameRequest(BaseModel):
     email:str
 
 class FollowRequest(BaseModel):
-    username: str  # the user to be followed/unfollowed
-    action: str  # either "follow" or "unfollow"
+    username: str  
+    action: str 
     currentUserName: str 
 
 
 class ProfileUpdate(BaseModel):
     profileName: str
     username: str
-    bio: str  # Assuming you plan to add this field
-    email: str  # Used to identify the user
+    bio: str  
+    email: str 
  
 class CommentRequest(BaseModel):
     post_id: str
@@ -89,7 +60,7 @@ class CommentRequest(BaseModel):
 
 
 def getuserfromemail(email):
-    user_ref = connectDB.collection('NewUser').where('email_address', '==', email).limit(1).get()
+    user_ref = connectDB.collection('User').where('email_address', '==', email).limit(1).get()
     user_data = {
             'name':'John Doe'
         }
@@ -100,19 +71,19 @@ def getuserfromemail(email):
         return user_data
 
 
-def getUserPosts(username):
+def fetch_posts_of_user(username):
     posts = []
-    posts_ref = connectDB.collection('NewPost')
+    posts_ref = connectDB.collection('Post')
     query = posts_ref.where('Username', '==', username).stream()
     for post in query:
         posts.append(post.to_dict())
 
     return posts
 
-def createPost(filename, user, postdescription):
+def add_post_to_database(filename, user, postdescription):
     post_id = str(uuid.uuid4())  # generate unique post ID
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # format current time
-    connectDB.collection('NewPost').add(
+    connectDB.collection('Post').add(
             {
     "id": post_id,
     "Username": user['Username'],
@@ -139,7 +110,7 @@ def addFile(file, user, postdescription):
 
     blob = bucket.blob(file.filename)  # Correct way to get a blob
     blob.upload_from_file(file.file, content_type=file.content_type)  # Pass file-like object
-    createPost(file.filename, user, postdescription)
+    add_post_to_database(file.filename, user, postdescription)
 
 def blobList(prefix):
     print("local_constants.PROJECT_NAME ",local_constants.PROJECT_NAME)
@@ -151,8 +122,6 @@ def downloadBlob(filename):
     bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
     blob = bucket.get_blob(filename)
     return blob.download_as_bytes()
-    
-
 
 def validateFirebaseToken(id_token):
     if not id_token:
@@ -167,21 +136,21 @@ def validateFirebaseToken(id_token):
 
 def getuser(user_token):
     print("inside get user function")
-    user = connectDB.collection('NewUser').document(user_token['user_id'])
+    user = connectDB.collection('User').document(user_token['user_id'])
     if not user.get().exists:
         user_data = {
             'name':'John Doe'
         }
-        connectDB.collection('NewUser').document(user_token['user_id']).set(user_data)
+        connectDB.collection('User').document(user_token['user_id']).set(user_data)
 
     return user
 
 @app.get("/myprofile", response_class=HTMLResponse)
-async def index(request: Request):
+async def profile_page_of_user(request: Request):
     return templates.TemplateResponse("myprofile.html", {"request": request})
 
 @app.get("/home", response_class=HTMLResponse)
-async def index(request: Request):
+async def home_page(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
 
 
@@ -202,7 +171,6 @@ async def index(request: Request):
     directory_list = []
 
     blobs = blobList(None)
-    print("after blobs")
     for blob in blobs:
         if blob.name[-1] == "/":
             directory_list.append(blob)
@@ -213,10 +181,6 @@ async def index(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, 'user_token':user_token , 'error_message':error_message , 'user_info':user, 'file_list':file_list,'directory_list':directory_list})
 
 
-
-@app.get("/search", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse("search.html", {"request": request})
 
 @app.get("/user/{username}", response_class=HTMLResponse)
 async def renderuserprofile(request: Request, username:str):
@@ -240,27 +204,17 @@ async def renderfollowers(request: Request):
     return templates.TemplateResponse("followers.html", {"request": request , 'user_email':user_token['email']})
 
 @app.get("/following", response_class=HTMLResponse)
-async def renderfollowing(request: Request):
+async def render_following_page(request: Request):
     id_token = request.cookies.get('token')
-    error_message = "No error here"
     user_token = None
-    user = None
-
     user_token = validateFirebaseToken(id_token)
-
-    # print("inside user toekn ",user_token)
-    # if not user_token:
-    #     return templates.TemplateResponse("login.html",{'request':request, 'user_token':None , 'error_message':None , 'user_info':None})
-    
     return templates.TemplateResponse("following.html", {"request": request , 'user_email':user_token['email']})
-
-
 
 
 @app.get("/api/detailsofuser/{userEmail}")
 async def fetch_details_of_user(userEmail:str , response_class=JSONResponse):
     print("getting usrr ",userEmail)
-    user_ref = connectDB.collection('NewUser').where('email_address', '==', userEmail).limit(1).get()
+    user_ref = connectDB.collection('User').where('email_address', '==', userEmail).limit(1).get()
     if not user_ref:
         return JSONResponse(content={"error": "User not found"}, status_code=404)
     else:
@@ -271,9 +225,9 @@ async def fetch_details_of_user(userEmail:str , response_class=JSONResponse):
     
 
 @app.get("/api/user/{username}")
-async def fetch_details_of_user(username: str , response_class=JSONResponse):
+async def fetch_details_of_user_username(username: str , response_class=JSONResponse):
     print("getting usrr")
-    user_ref = connectDB.collection('NewUser').where('Username', '==', username).limit(1).get()
+    user_ref = connectDB.collection('User').where('Username', '==', username).limit(1).get()
     if not user_ref:
         return JSONResponse(content={"error": "User not found"}, status_code=404)
     else:
@@ -282,7 +236,7 @@ async def fetch_details_of_user(username: str , response_class=JSONResponse):
     
 @app.post("/updateUsername")
 async def update_username(profile: ProfileUpdate):
-    users_ref = connectDB.collection('NewUser')
+    users_ref = connectDB.collection('User')
     print("email ",profile.email)
     query = users_ref.where('email_address', '==', profile.email).stream()
 
@@ -307,9 +261,9 @@ async def update_username(profile: ProfileUpdate):
 @app.post("/api/initializeuser")
 async def initializeuser(data: EmailRequest):
     # print("check user ", data)
-    user_ref = connectDB.collection('NewUser').where('email_address', '==', data.email).limit(1).get()
+    user_ref = connectDB.collection('User').where('email_address', '==', data.email).limit(1).get()
     if not user_ref:
-        connectDB.collection('NewUser').add({
+        connectDB.collection('User').add({
                 "name": "",
                 "email_address": data.email,
                 "Username": "",
@@ -373,13 +327,13 @@ async def uploadFileHandler(request: Request):
 @app.post("/api/comment")
 async def add_comment(data: CommentRequest, request: Request):
     try:
-        post_ref = connectDB.collection('NewPost').where('id', '==', data.post_id).limit(1).stream()
+        post_ref = connectDB.collection('Post').where('id', '==', data.post_id).limit(1).stream()
         post = next(post_ref, None)
 
         if post is None:
             raise HTTPException(status_code=404, detail="Post not found")
 
-        post_doc = connectDB.collection('NewPost').document(post.id)
+        post_doc = connectDB.collection('Post').document(post.id)
 
         # New comment structure
         new_comment = {
@@ -412,7 +366,7 @@ async def addCommentToPost(request: Request):
         return JSONResponse(content={"error": "No post ID provided"}, status_code=400)
 
     # Search by post.id field
-    posts_ref = connectDB.collection("NewPost")
+    posts_ref = connectDB.collection("Post")
     query = posts_ref.where("id", "==", post_id_field).limit(1).get()
 
     if not query:
@@ -436,7 +390,7 @@ async def addCommentToPost(request: Request):
     comments = post_doc.get("user_comments", [])
     comments.append(new_comment)
 
-    # Update in the original NewPost collection
+    # Update in the original Post collection
     doc.reference.update({
         "user_comments": comments
     })
@@ -447,7 +401,7 @@ async def addCommentToPost(request: Request):
 
 @app.get("/api/users")
 async def fetch_all_users():
-    user_ref = connectDB.collection('NewUser')
+    user_ref = connectDB.collection('User')
     docs = user_ref.stream()
     users = []
     
@@ -463,71 +417,19 @@ async def fetch_all_users():
     return {"users": users}
 
 
-
-
-
-
-@app.post("/getuserposts", response_class=JSONResponse)
-async def getUserPostsHandler(request: Request, username: str = Form(...)):
-    id_token = request.cookies.get("token")
-    user_token = validateFirebaseToken(id_token)
-
-    if not user_token:
-        return RedirectResponse('/login', status_code=status.HTTP_302_FOUND)
-
-    posts = getUserPosts(username)
-    
-    return JSONResponse(content={"posts": posts})
-
-
-
 @app.get("/api/posts/{username}")
-async def getPostsOfUser(username: str, response_class=JSONResponse):
+async def fetch_posts_of_user(username: str, response_class=JSONResponse):
     print("getting posts of user")
-    posts_ref = connectDB.collection('NewPost').where('Username', '==', username).get()
+    posts_ref = connectDB.collection('Post').where('Username', '==', username).get()
     if not posts_ref:
         posts = []
     else:
         posts = [doc.to_dict() for doc in posts_ref]
     return JSONResponse(content={"posts": posts}, status_code=200)
-
-    
-@app.post("/getPostsOfFriend")
-async def getPostsOfFriend(data: EmailRequest, response_class=JSONResponse):
-    print("getting posts of user")
-    posts_ref = connectDB.collection('NewPost').where('Username', '==', data.username).get()
-    if not posts_ref:
-        posts = []
-    else:
-        posts = [doc.to_dict() for doc in posts_ref]
-    return JSONResponse(content={"posts": posts}, status_code=200)
-
-    
 
 @app.get("/test", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("test.html", {"request": request})
-
-
-
-@app.post("/addpost")
-async def checkandcreatenewuser(data: EmailRequest):
-    print("check user ", data)
-    user_ref = connectDB.collection('NewUser').where('Username', '==', data.username).limit(1).get()
-    if not user_ref:
-        connectDB.collection('NewUser').add({
-                "name": data.username,
-                "Username":data.username,
-                "followers":[],
-                "following":[],
-                "posts":[]
-            })
-        print("user created")
-    else:
-        print("user already exist")
-        pass
-    return 0
-
 
 @app.post("/api/follow")
 async def handle_follow_action(data: FollowRequest):
@@ -535,8 +437,8 @@ async def handle_follow_action(data: FollowRequest):
         timestamp = datetime.utcnow().isoformat()
 
         # Fetch documents
-        user2_query = connectDB.collection('NewUser').where('Username', '==', data.username).limit(1).stream()
-        user1_query = connectDB.collection('NewUser').where('Username', '==', data.currentUserName).limit(1).stream()
+        user2_query = connectDB.collection('User').where('Username', '==', data.username).limit(1).stream()
+        user1_query = connectDB.collection('User').where('Username', '==', data.currentUserName).limit(1).stream()
 
         user2_doc = next(user2_query, None)
         user1_doc = next(user1_query, None)
@@ -544,8 +446,8 @@ async def handle_follow_action(data: FollowRequest):
         if not user1_doc or not user2_doc:
             raise HTTPException(status_code=404, detail="User(s) not found")
 
-        user2_ref = connectDB.collection('NewUser').document(user2_doc.id)
-        user1_ref = connectDB.collection('NewUser').document(user1_doc.id)
+        user2_ref = connectDB.collection('User').document(user2_doc.id)
+        user1_ref = connectDB.collection('User').document(user1_doc.id)
 
         if data.action == "follow":
             # user1 follows user2
@@ -588,7 +490,7 @@ async def handle_follow_action(data: FollowRequest):
 @app.post("/api/feed")
 async def getUser(data: UserRequest):
     print("fetching user")
-    user_docs = connectDB.collection('NewUser').where('Username', '==', data.username).limit(1).get()
+    user_docs = connectDB.collection('User').where('Username', '==', data.username).limit(1).get()
 
     if not user_docs:
         return JSONResponse(content={"error": "User not found"}, status_code=404)
@@ -604,7 +506,7 @@ async def getUser(data: UserRequest):
     print("all usernames ", all_usernames)
     all_posts = []
     for username in all_usernames:
-        posts = connectDB.collection('NewPost') \
+        posts = connectDB.collection('Post') \
             .where('Username', '==', username) \
             .get()
         for post in posts:

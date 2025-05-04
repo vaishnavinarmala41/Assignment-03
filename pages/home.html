@@ -107,7 +107,6 @@
 </head>
 
 <body>
-    <!-- Header -->
     <nav class="bg-white shadow-md">
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex justify-between h-16">
@@ -161,9 +160,7 @@
             </div>
         </div>
     </nav>
-    <!-- Main Content -->
     <main class="max-w-xl mx-auto px-4 py-6">
-        <!-- Loading State -->
         <div id="loadingState" class="space-y-8">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="p-4 border-b">
@@ -198,12 +195,9 @@
             </div>
         </div>
 
-        <!-- Posts Feed -->
         <div id="postsFeed" class="space-y-8 hidden">
-            <!-- Posts will be populated here -->
         </div>
 
-        <!-- Empty State -->
         <div id="emptyState" class="bg-white rounded-lg shadow-md p-8 text-center hidden">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -212,7 +206,7 @@
             </svg>
             <h2 class="mt-4 text-xl font-bold text-gray-800">No posts yet</h2>
             <p class="mt-2 text-gray-600">Follow some users to see their posts here.</p>
-            <a href="/search"
+            <a href="#"
                 class="mt-4 inline-block px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 transition duration-150">
                 Find People to Follow
             </a>
@@ -220,7 +214,6 @@
     </main>
 
 
-    <!-- Friends Search Modal -->
     <div id="friendsModal" class="friends-modal">
         <div class="p-4">
             <div class="mb-4">
@@ -237,7 +230,6 @@
             </div>
 
             <div id="searchResults" class="space-y-2">
-                <!-- Search results will be populated here -->
                 <div class="text-sm text-gray-500">Search for friends...</div>
             </div>
         </div>
@@ -338,7 +330,6 @@
 
 
         async function initializeuser(userEmail) {
-            // console.log("insdei fetch user detials ", userEmail)
             const details_of_user = await fetch(`/api/initializeuser`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }
                 , body: JSON.stringify({ 'email': userEmail })
@@ -361,7 +352,6 @@
         }
 
 
-        // Render search results
         function renderSearchResults(results) {
             const searchResultsContainer = document.getElementById('searchResults');
             console.log("results ", results)
@@ -387,7 +377,6 @@
 
             searchResultsContainer.innerHTML = html;
 
-            // Add click event listeners to user items
             document.querySelectorAll('.user-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const username = item.getAttribute('data-username');
@@ -396,10 +385,8 @@
             });
         }
 
-        // Fetch all users for search functionality
         async function fetchAllUsers() {
             try {
-                // Replace with your actual API endpoint
                 const response = await fetch('/api/users');
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
@@ -407,14 +394,12 @@
 
                 const allUsersJson = await response.json();
                 allUsers = allUsersJson.users
-                // console.log("Fetched users:", allUsers);
             } catch (error) {
                 console.error("Error fetching users:", error);
-                allUsers = []; // Set to empty array on error
+                allUsers = [];
             }
         }
 
-        // Filter users based on search term (profileName only)
         function filterUsers(searchTerm) {
             if (!searchTerm) return [];
             console.log("search terms ", searchTerm)
@@ -426,7 +411,6 @@
         }
 
 
-        // Fetch user details
         async function fetchUserDetails() {
             try {
                 const response = await fetch(`/api/detailsofuser/${loggedInUserEmail}`);
@@ -450,7 +434,6 @@
             }
         }
 
-        // Fetch feed posts
         async function fetchFeedPosts() {
             console.log("inside fetch posts ", currentUserData)
             try {
@@ -460,7 +443,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        username: currentUserData?.Username, // match what backend expects
+                        username: currentUserData?.Username,
                     }),
                 });
 
@@ -479,7 +462,6 @@
             }
         }
 
-        // Get image URL
         async function getImageUrl(filename) {
             try {
                 console.log("filename ", filename)
@@ -504,7 +486,6 @@
             }
         }
 
-        // Add comment
         async function addComment(postId, comment) {
             try {
 
@@ -530,14 +511,12 @@
                 }
 
                 return await response.json();
-                // return true
             } catch (error) {
                 console.error("Error adding comment:", error);
                 return null;
             }
         }
 
-        // Toggle like
         async function toggleLike(postId) {
             try {
                 const response = await fetch('/api/like', {
@@ -562,7 +541,6 @@
             }
         }
 
-        // Format date
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -585,16 +563,13 @@
             }
         }
 
-        // Create post element
         async function createPostElement(post) {
             const postElement = document.createElement('article');
             postElement.className = 'bg-white rounded-lg shadow-md overflow-hidden';
             postElement.id = `post-${post.id}`;
 
-            // Get user initials for profile image
             const initials = post.Username.substring(0, 2).toUpperCase();
 
-            // Create post header
             const postHeader = document.createElement('div');
             postHeader.className = 'p-4 border-b';
             postHeader.innerHTML = `
@@ -610,11 +585,9 @@
                 </div>
             `;
 
-            // Create post image container
             const imageContainer = document.createElement('div');
             imageContainer.className = 'relative bg-gray-100';
 
-            // Create loading placeholder
             const loadingPlaceholder = document.createElement('div');
             loadingPlaceholder.className = 'absolute inset-0 flex items-center justify-center bg-gray-200';
             loadingPlaceholder.innerHTML = `
@@ -625,7 +598,6 @@
             `;
             imageContainer.appendChild(loadingPlaceholder);
 
-            // Get image URL and create image element
             const imageUrl = await getImageUrl(post.media_file);
             if (imageUrl) {
                 const img = document.createElement('img');
@@ -645,7 +617,6 @@
                 `;
             }
 
-            // Create post actions
             const postActions = document.createElement('div');
             postActions.className = 'p-4 border-b';
             postActions.innerHTML = `
@@ -661,7 +632,6 @@
                 </div>
             `;
 
-            // Create post content
             const postContent = document.createElement('div');
             postContent.className = 'p-4';
             postContent.innerHTML = `
@@ -671,27 +641,19 @@
                 </div>
             `;
 
-            // Create comments section
             const commentsSection = document.createElement('div');
             commentsSection.className = 'px-4 pb-2';
-
-            // Create comments container
             const commentsContainer = document.createElement('div');
             commentsContainer.className = 'space-y-2 mb-3';
             commentsContainer.id = `comments-${post.id}`;
 
-            // Add comments
             if (post.user_comments && post.user_comments.length > 0) {
-                // Sort comments by date (newest first)
                 const sortedComments = [...post.user_comments].sort((a, b) => new Date(b.time) - new Date(a.time));
 
-                // Determine if we need to show the "Show more" button
                 const showAll = sortedComments.length <= 5;
                 const displayComments = showAll ? sortedComments : sortedComments.slice(0, 5);
 
-                // Add comments to container
                 displayComments.forEach(comment => {
-                    // console.log("new comment 444 ", comment)
                     const commentElement = document.createElement('div');
                     commentElement.className = 'text-sm';
                     commentElement.innerHTML = `
@@ -702,16 +664,13 @@
                     commentsContainer.appendChild(commentElement);
                 });
 
-                // Add "Show more" button if needed
                 if (!showAll) {
                     const showMoreButton = document.createElement('button');
                     showMoreButton.className = 'text-sm text-gray-500 hover:text-gray-700 mt-2';
                     showMoreButton.textContent = 'Show more comments';
                     showMoreButton.onclick = () => {
-                        // Remove existing comments
                         commentsContainer.innerHTML = '';
 
-                        // Add all comments
                         sortedComments.forEach(comment => {
                             console.log("comment ", comment)
                             const commentElement = document.createElement('div');
@@ -724,20 +683,17 @@
                             commentsContainer.appendChild(commentElement);
                         });
 
-                        // Remove show more button
                         showMoreButton.remove();
                     };
                     commentsSection.appendChild(showMoreButton);
                 }
             } else {
-                // No comments message
                 const noCommentsElement = document.createElement('div');
                 noCommentsElement.className = 'text-sm text-gray-500';
                 noCommentsElement.textContent = 'No comments yet';
                 commentsContainer.appendChild(noCommentsElement);
             }
 
-            // Add comment form
             const commentForm = document.createElement('form');
             commentForm.className = 'mt-3 border-t pt-3';
             commentForm.innerHTML = `
@@ -752,7 +708,6 @@
                 </div>
             `;
 
-            // Add event listener for comment form
             commentForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
 
@@ -764,15 +719,12 @@
                 }
 
                 try {
-                    // Disable form during submission
                     const submitButton = commentForm.querySelector('button[type="submit"]');
                     submitButton.disabled = true;
 
-                    // Add comment
                     const result = await addComment(post.id, comment);
 
                     if (result) {
-                        // Create new comment element
                         const newComment = {
                             username: currentUserData.Username,
                             comment: comment,
@@ -781,57 +733,17 @@
 
                         fetchFeedPosts();
 
-                        // console.log("user_comments in post ", post)
-                        // // Add to post's comments
-                        // const noCommentsMessage = commentsContainer.querySelector('.text-gray-500');
-                        // if (noCommentsMessage && noCommentsMessage.textContent.includes("No comments")) {
-                        //     commentsContainer.removeChild(noCommentsMessage);
-                        // }
 
-
-                        // // Update comments container
-                        // const commentsContainer = document.getElementById(`comments-${post.id}`);
-
-                        // // Clear no comments message if it exists
-                        // if (commentsContainer.querySelector('.text-gray-500')) {
-                        //     commentsContainer.innerHTML = '';
-                        // }
-                        // console.log("nee coment ", newComment)
-                        // // Add new comment at the top
-                        // const commentElement = document.createElement('div');
-                        // commentElement.className = 'text-sm';
-                        // commentElement.innerHTML = `
-                        //     <span class="font-semibold">${newComment.username}</span>
-                        //     <span class="text-gray-800">${newComment.comment}</span>
-                        //     <div class="text-xs text-gray-500">${formatDate(newComment.time)}</div>
-                        // `;
-
-                        // // Insert at the beginning
-                        // if (commentsContainer.firstChild) {
-                        //     commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
-                        // } else {
-                        //     commentsContainer.appendChild(commentElement);
-                        // }
-
-                        // // Update comment count
-                        // const commentCountElement = postElement.querySelector('.comment-count');
-                        // commentCountElement.textContent = post.user_comments.length;
-
-                        // // Reset form
-                        // commentInput.value = '';
-                        // commentForm.querySelector('.comment-char-count').textContent = '0';
                     }
 
                 } catch (error) {
                     console.error('Error adding comment:', error);
                     alert('Failed to add comment. Please try again.');
                 } finally {
-                    // Re-enable form
                     submitButton.disabled = false;
                 }
             });
 
-            // Add event listener for comment input to update character count
             const commentInput = commentForm.querySelector('.comment-input');
             const commentCharCount = commentForm.querySelector('.comment-char-count');
 
@@ -846,7 +758,6 @@
                 }
             });
 
-            // Assemble post element
             postElement.appendChild(postHeader);
             postElement.appendChild(imageContainer);
             postElement.appendChild(postActions);
@@ -858,7 +769,6 @@
             return postElement;
         }
 
-        // Update posts feed UI
         async function updatePostsFeedUI(posts) {
             const postsFeed = document.getElementById('postsFeed');
             const emptyState = document.getElementById('emptyState');
@@ -871,25 +781,20 @@
                 return;
             }
 
-            // Sort posts by date (newest first)
             posts.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
-            // Clear existing posts
             postsFeed.innerHTML = '';
 
-            // Create post elements
             for (const post of posts) {
                 const postElement = await createPostElement(post);
                 postsFeed.appendChild(postElement);
             }
 
-            // Add event listeners for like buttons
             const likeButtons = document.querySelectorAll('.like-button');
             likeButtons.forEach(button => {
                 button.addEventListener('click', async function () {
                     const postId = this.dataset.postId;
 
-                    // Toggle like UI immediately for better UX
                     this.classList.toggle('liked');
                     const likeCount = this.querySelector('.like-count');
                     const currentCount = parseInt(likeCount.textContent);
@@ -900,13 +805,11 @@
                         likeCount.textContent = Math.max(0, currentCount - 1);
                     }
 
-                    // Call API to toggle like
                     try {
                         await toggleLike(postId);
                     } catch (error) {
                         console.error('Error toggling like:', error);
 
-                        // Revert UI if API call fails
                         this.classList.toggle('liked');
                         if (this.classList.contains('liked')) {
                             likeCount.textContent = currentCount + 1;
@@ -917,22 +820,18 @@
                 });
             });
 
-            // Show posts feed, hide loading and empty states
             postsFeed.classList.remove('hidden');
             emptyState.classList.add('hidden');
             loadingState.classList.add('hidden');
         }
 
-        // Initialize page
         async function initPage() {
-            // Verify user session
             const isLoggedIn = await verifyUserSession();
             if (!isLoggedIn) {
                 return;
             }
             fetchAllUsers()
 
-            // Set up event listeners
             const friendsBtn = document.getElementById('friendsBtn');
             const friendsModal = document.getElementById('friendsModal');
             const friendSearch = document.getElementById('friendSearch');
@@ -940,61 +839,45 @@
             const signoutBtn = document.getElementById('signoutBtn');
 
 
-            // Friends button toggle modal
             friendsBtn.addEventListener('click', () => {
                 console.log("button clicked")
                 friendsModal.style.display = 'block'
             });
 
-            // Close modal when clicking outside
             document.addEventListener('click', (event) => {
                 if (!friendsModal.contains(event.target) && event.target !== friendsBtn) {
                     friendsModal.classList.remove('show');
                 }
             });
 
-            // Search functionality
             friendSearch.addEventListener('input', (e) => {
                 const searchTerm = e.target.value;
                 const results = filterUsers(searchTerm);
                 renderSearchResults(results);
             });
 
-            // Home button
             homeBtn.addEventListener('click', () => {
                 window.location.href = '/home';
             });
 
-            // Sign out button
             signoutBtn.addEventListener('click', () => {
-                // Clear the token cookie
                 document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                // Redirect to login page
                 window.location.href = '/';
             });
 
-            // Fetch user details and feed posts
             try {
                 const [userData] = await Promise.all([
                     fetchUserDetails(),
                 ]);
 
                 if (userData) {
-                    // currentUserData = userData;
 
-                    // // Update header profile image
-                    // const headerProfileImage = document.getElementById('headerProfileImage');
-                    // const initials = userData.Username.split(' ').map(name => name[0]).join('').toUpperCase();
-                    // headerProfileImage.textContent = initials;
+
                 }
 
-                // // Update posts feed
-                // posts = postsData || [];
-                // await updatePostsFeedUI(posts);
             } catch (error) {
                 console.error('Error initializing page:', error);
 
-                // Show error state
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('postsFeed').classList.add('hidden');
                 document.getElementById('emptyState').classList.remove('hidden');
@@ -1016,19 +899,16 @@
         }
 
 
-        // Function to open the modal
         function openModal() {
             profileEditModal.classList.add('show');
             document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
         }
 
-        // Function to close the modal
         function closeModal() {
             profileEditModal.classList.remove('show');
             document.body.style.overflow = ''; // Re-enable scrolling
         }
 
-        // Update character count for bio
         function updateCharCount() {
             const maxLength = 150;
             const currentLength = bioTextarea.value.length;
@@ -1042,12 +922,8 @@
             }
         }
 
-        // Handle form submission
         async function handleSubmit() {
-            // event.preventDefault();
-            // console.log("insde hangle submit")
-            // Get form data
-            // const formData = new FormData(profileEditForm);
+
             const profileData = {
                 profileName: document.getElementById('profileName').value,
                 username: document.getElementById('username').value,
@@ -1055,7 +931,6 @@
                 email: loggedInUserEmail
             };
             console.log("profile data ", profileData)
-            // Validate form data
             if (!profileData.profileName || !profileData.username) {
                 alert('Profile name and username are required');
                 return;
@@ -1067,7 +942,6 @@
             }
 
             try {
-                // In a real app, you would send this data to your server
                 console.log('Submitting profile data:', profileData);
                 const updateUsernameResponse = await fetch("/updateUsername", {
                     method: "POST",
@@ -1077,27 +951,13 @@
                     body: JSON.stringify(profileData),
                 });
 
-                // const updateUsernameResponse = await fetch("/updateUsername", { profileData: profileData })
-                // Simulate API call
-                // await new Promise(resolve => setTimeout(resolve, 500));
+
                 if (updateUsernameResponse.ok) {
 
-                    // Update the UI with the new data
-                    // document.querySelector('h2.text-xl').textContent = profileData.profileName;
-                    // document.querySelector('p.text-gray-600').textContent = `@${profileData.username}`;
-                    // document.querySelector('p.text-gray-700').textContent = profileData.bio;
-
-                    // // Update initials in avatar
-                    // const initials = profileData.profileName.split(' ').map(name => name[0]).join('').toUpperCase();
-                    // document.querySelector('.w-32.h-32.rounded-full').textContent = initials;
-                    // document.querySelector('.w-24.h-24.rounded-full').textContent = initials;
-
-                    // Close the modal
                     closeModal();
 
                 }
-                // Show success message
-                // alert('Profile updated successfully!');
+
             } catch (error) {
                 console.error('Error updating profile:', error);
                 alert('Failed to update profile. Please try again.');
@@ -1116,10 +976,8 @@
         bioTextarea.addEventListener('input', updateCharCount);
         profileEditForm.addEventListener('submit', handleSubmit);
 
-        // Initialize character count
         updateCharCount();
 
-        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>

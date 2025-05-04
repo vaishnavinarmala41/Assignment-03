@@ -467,7 +467,6 @@
                             <div class="flex items-center">
                                 <div id="modalUserImage"
                                     class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold mr-3">
-                                    <!-- User initials -->
                                 </div>
                                 <div>
                                     <div id="modalUsername" class="font-semibold">username</div>
@@ -483,17 +482,14 @@
                         </div>
                     </div>
 
-                    <!-- Description -->
                     <div class="p-4 border-b">
                         <p id="modalDescription" class="text-sm">Post description</p>
                         <p id="modalDate" class="text-xs text-gray-500 mt-1">Date</p>
                     </div>
 
-                    <!-- Comments -->
                     <div class="flex-grow overflow-y-auto p-4 border-b">
                         <h4 class="font-semibold mb-3">Comments</h4>
                         <div id="modalComments" class="space-y-3">
-                            <!-- Comments will be populated here -->
                         </div>
                         <div id="showMoreComments" class="hidden mt-3 text-center">
                             <button class="text-sm text-pink-600 hover:text-pink-700">Show more comments</button>
@@ -503,7 +499,6 @@
                         </div>
                     </div>
 
-                    <!-- Add comment form -->
                     <div class="p-4">
                         <form id="commentForm" class="flex flex-col">
                             <div class="flex mb-1">
@@ -524,7 +519,6 @@
         </div>
     </div>
 
-    <!-- Add Post Modal -->
     <div id="addPostModal" class="add-post-modal">
         <div class="add-post-content">
             <div class="bg-gradient-to-r from-purple-600 to-pink-600 py-4 px-6">
@@ -586,7 +580,6 @@
     </div>
 
     <script>
-        // Global variables
         let currentUserData = null;
         let currentPosts = [];
         let currentPostId = null;
@@ -601,7 +594,6 @@
         const bioTextarea = document.getElementById('bio');
         const bioCharCount = document.getElementById('bioCharCount');
 
-        // JWT and session handling functions
         function parseJWT(jwtToken) {
             try {
                 const base64Payload = jwtToken.split('.')[1];
@@ -653,7 +645,6 @@
 
 
         async function initializeuser(userEmail) {
-            // console.log("insdei fetch user detials ", userEmail)
             const details_of_user = await fetch(`/api/initializeuser`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }
                 , body: JSON.stringify({ 'email': userEmail })
@@ -662,10 +653,8 @@
         }
 
 
-        // Fetch all users for search functionality
         async function fetchAllUsers() {
             try {
-                // Replace with your actual API endpoint
                 const response = await fetch('/api/users');
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
@@ -673,14 +662,12 @@
 
                 const allUsersJson = await response.json();
                 allUsers = allUsersJson.users
-                // console.log("Fetched users:", allUsers);
             } catch (error) {
                 console.error("Error fetching users:", error);
                 allUsers = []; // Set to empty array on error
             }
         }
 
-        // Filter users based on search term (profileName only)
         function filterUsers(searchTerm) {
             if (!searchTerm) return [];
             console.log("search terms ", searchTerm)
@@ -692,7 +679,6 @@
         }
 
 
-        // Render search results
         function renderSearchResults(results) {
             const searchResultsContainer = document.getElementById('searchResults');
             console.log("results ", results)
@@ -718,7 +704,6 @@
 
             searchResultsContainer.innerHTML = html;
 
-            // Add click event listeners to user items
             document.querySelectorAll('.user-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const username = item.getAttribute('data-username');
@@ -728,10 +713,8 @@
         }
 
 
-        // Fetch user posts
         async function fetchUserPosts() {
             try {
-                // console.log("current user data ",)
                 const response = await fetch(`/api/posts/${currentUserData.Username}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch user posts');
@@ -748,7 +731,6 @@
             }
         }
 
-        // Get image URL
         async function getImageUrl(filename) {
             try {
                 const formData = new FormData();
@@ -772,7 +754,6 @@
             }
         }
 
-        // Create new post
         async function createPost(imageFile, caption) {
             try {
                 console.log("image fiel ", imageFile)
@@ -798,9 +779,7 @@
             }
         }
 
-        // Update profile UI
         function updateProfileUI(userData) {
-            // Update profile image/initials
             const profileImage = document.getElementById('profileImage');
             if (userData.profileImage) {
                 profileImage.innerHTML = `<img src="${userData.profileImage}" alt="${userData.name}" class="w-full h-full rounded-full object-cover">`;
@@ -809,22 +788,18 @@
                 profileImage.textContent = initials;
             }
 
-            // Update profile details
             document.getElementById('profileName').textContent = userData.name;
             document.getElementById('username').textContent = `@${userData.Username}`;
             document.getElementById('userBio').textContent = userData.bio || 'No bio available';
 
-            // Update counts
             document.getElementById('postsCount').textContent = currentPosts.length;
             document.getElementById('followersCount').textContent = userData.followers_list.length;
             document.getElementById('followingCount').textContent = userData.following_list.length;
 
-            // Show profile content, hide loading state
             document.getElementById('profileLoading').classList.add('hidden');
             document.getElementById('profileContent').classList.remove('hidden');
         }
 
-        // Update posts grid UI
         async function updatePostsGridUI(posts) {
             const postsGrid = document.getElementById('postsGrid');
             const noPosts = document.getElementById('noPosts');
@@ -838,18 +813,14 @@
                 return;
             }
 
-            // Sort posts by date (newest first)
             posts.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
-            // Clear existing posts
             postsGrid.innerHTML = '';
 
-            // Create post elements
             for (const post of posts) {
                 const postElement = document.createElement('div');
                 postElement.className = 'aspect-square bg-gray-200 relative cursor-pointer overflow-hidden';
 
-                // Create loading placeholder
                 const loadingPlaceholder = document.createElement('div');
                 loadingPlaceholder.className = 'absolute inset-0 flex items-center justify-center bg-gray-200';
                 loadingPlaceholder.innerHTML = `
@@ -860,7 +831,6 @@
                 `;
                 postElement.appendChild(loadingPlaceholder);
 
-                // Get image URL and create image element
                 getImageUrl(post.media_file).then(imageUrl => {
                     if (imageUrl) {
                         const img = document.createElement('img');
@@ -880,7 +850,6 @@
                     }
                 });
 
-                // Add click event to open post modal
                 postElement.addEventListener('click', () => {
                     openPostModal(post);
                 });
@@ -888,27 +857,22 @@
                 postsGrid.appendChild(postElement);
             }
 
-            // Show posts grid, hide loading state
             postsGrid.classList.remove('hidden');
             noPosts.classList.add('hidden');
             document.getElementById('postsLoading').classList.add('hidden');
         }
 
-        // Open post modal
         async function openPostModal(post) {
             currentPostId = post.id;
 
-            // Set modal content
             document.getElementById('modalUsername').textContent = post.Username;
             document.getElementById('modalDescription').textContent = post.caption || 'No description';
             document.getElementById('modalDate').textContent = formatDate(post.Date);
 
-            // Set user initials in modal
             const modalUserImage = document.getElementById('modalUserImage');
             const initials = post.Username.substring(0, 2).toUpperCase();
             modalUserImage.textContent = initials;
 
-            // Get and set image
             const imageUrl = await getImageUrl(post.media_file);
             if (imageUrl) {
                 document.getElementById('modalImage').src = imageUrl;
@@ -916,27 +880,22 @@
                 document.getElementById('modalImage').src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%22%20height%3D%22100%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20fill%3D%22%23ddd%22%20width%3D%22100%22%20height%3D%22100%22%2F%3E%3Ctext%20fill%3D%22%23888%22%20font-family%3D%22sans-serif%22%20font-size%3D%2212%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3EImage%20not%20available%3C%2Ftext%3E%3C%2Fsvg%3E';
             }
 
-            // Update comments
             updateCommentsUI(post.user_comments);
 
-            // Show modal
             document.getElementById('postModal').classList.add('show');
             document.body.style.overflow = 'hidden'; // Prevent scrolling
         }
 
-        // Close post modal
         function closePostModal() {
             document.getElementById('postModal').classList.remove('show');
-            document.body.style.overflow = ''; // Re-enable scrolling
+            document.body.style.overflow = '';
             currentPostId = null;
         }
 
-        // Open add post modal
         function openAddPostModal() {
             document.getElementById('addPostModal').classList.add('show');
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
+            document.body.style.overflow = 'hidden';
 
-            // Reset form
             document.getElementById('addPostForm').reset();
             document.getElementById('imagePreview').innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -945,13 +904,11 @@
             `;
         }
 
-        // Close add post modal
         function closeAddPostModal() {
             document.getElementById('addPostModal').classList.remove('show');
             document.body.style.overflow = ''; // Re-enable scrolling
         }
 
-        // Update comments UI
         function updateCommentsUI(comments) {
             console.log("update comments ui ", comments)
             const commentsContainer = document.getElementById('modalComments');
@@ -965,17 +922,13 @@
                 return;
             }
 
-            // Sort comments by date (newest first)
             comments.sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
-            // Clear existing comments
             commentsContainer.innerHTML = '';
 
-            // Determine if we need to show the "Show more" button
             const showAll = comments.length <= 5;
             const displayComments = showAll ? comments : comments.slice(0, 5);
 
-            // Create comment elements
             displayComments.forEach(comment => {
                 const commentElement = document.createElement('div');
                 commentElement.className = 'flex';
@@ -998,14 +951,11 @@
                 commentsContainer.appendChild(commentElement);
             });
 
-            // Show or hide "Show more" button
             if (comments.length > 5) {
                 showMoreComments.classList.remove('hidden');
                 const showMoreBtn = showMoreComments.querySelector('button');
                 showMoreBtn.onclick = () => {
-                    // Show all comments
                     updateAllCommentsUI(comments);
-                    // Hide the "Show more" button
                     showMoreComments.classList.add('hidden');
                 };
             } else {
@@ -1015,14 +965,11 @@
             noComments.classList.add('hidden');
         }
 
-        // Update all comments UI (when "Show more" is clicked)
         function updateAllCommentsUI(comments) {
             const commentsContainer = document.getElementById('modalComments');
 
-            // Clear existing comments
             commentsContainer.innerHTML = '';
 
-            // Create comment elements for all comments
             comments.forEach(comment => {
                 const commentElement = document.createElement('div');
                 commentElement.className = 'flex';
@@ -1046,7 +993,6 @@
             });
         }
 
-        // Format date
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -1069,7 +1015,6 @@
             }
         }
 
-        // Add comment
         async function addComment(postId, comment) {
             try {
                 console.log("post id ", postId, comment)
@@ -1092,7 +1037,6 @@
 
                 const result = await response.json();
 
-                // Refresh post data
                 const updatedPosts = await fetchUserPosts();
                 if (updatedPosts) {
                     currentPosts = updatedPosts;
@@ -1109,18 +1053,14 @@
             }
         }
 
-        // Initialize page
         async function initPage() {
-            // Verify user session
             const isLoggedIn = await verifyUserSession();
             if (!isLoggedIn) {
                 return;
             }
 
-            // Fetch user details and posts
             const [userData, postsData] = await Promise.all([
                 fetchUserDetails(),
-                // fetchUserPosts()
             ]);
 
             await fetchAllUsers()
@@ -1132,38 +1072,30 @@
             const signoutBtn = document.getElementById('signoutBtn');
             const closeSearchForm = document.getElementById('closeSearchForm')
 
-            // Friends button toggle modal
             friendsBtn.addEventListener('click', () => {
                 console.log("button clicked")
                 friendsModal.style.display = 'block'
             });
-            // closeSearchForm.addEventListener('click', (e))
-            // Close modal when clicking outside
             closeSearchForm.addEventListener('click', (event) => {
                 console.log("clicking")
                 friendsModal.style.display = 'none'
             });
 
-            // Search functionality
             friendSearch.addEventListener('input', (e) => {
                 const searchTerm = e.target.value;
                 const results = filterUsers(searchTerm);
                 renderSearchResults(results);
             });
 
-            // Home button
             homeBtn.addEventListener('click', () => {
                 window.location.href = '/home';
             });
 
             signoutBtn.addEventListener('click', () => {
-                // Clear the token cookie
                 document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                // Redirect to login page
                 window.location.href = '/';
             });
             if (!userData) {
-                // User not found
                 document.getElementById('profileHeader').innerHTML = `
                     <div class="text-center py-8">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1181,15 +1113,11 @@
 
 
 
-            // Store data
-            // currentUserData = userData;
             currentPosts = postsData || [];
 
-            // Update UI
             updateProfileUI(userData);
             updatePostsGridUI(currentPosts);
 
-            // Set up event listeners
             document.getElementById('closeModal').addEventListener('click', closePostModal);
             document.getElementById('postModal').addEventListener('click', (event) => {
                 if (event.target === document.getElementById('postModal')) {
@@ -1206,7 +1134,6 @@
                 if (!comment || !currentPostId) {
                     return;
                 }
-                // console.log("loggedInUsername ", loggedInUsername)
                 const result = await addComment(currentPostId, comment, loggedInUsername);
                 if (result) {
                     commentInput.value = '';
@@ -1214,7 +1141,6 @@
                 }
             });
 
-            // Comment character count
             const commentInput = document.getElementById('commentInput');
             const commentCharCount = document.getElementById('commentCharCount');
 
@@ -1229,11 +1155,9 @@
                 }
             });
 
-            // Add post button
             document.getElementById('addPostBtn').addEventListener('click', openAddPostModal);
             document.getElementById('noPostsAddBtn').addEventListener('click', openAddPostModal);
 
-            // Close add post modal
             document.getElementById('closeAddPostModal').addEventListener('click', closeAddPostModal);
             document.getElementById('cancelAddPost').addEventListener('click', closeAddPostModal);
             document.getElementById('addPostModal').addEventListener('click', (event) => {
@@ -1242,7 +1166,6 @@
                 }
             });
 
-            // Image preview
             const imageInput = document.getElementById('imageInput');
             const imagePreview = document.getElementById('imagePreview');
 
@@ -1250,7 +1173,6 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // Validate file type
                 const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
                 if (!validTypes.includes(file.type)) {
                     alert('Please select a PNG or JPG image');
@@ -1265,7 +1187,6 @@
                 reader.readAsDataURL(file);
             });
 
-            // Add post form submission
             document.getElementById('addPostForm').addEventListener('submit', async (event) => {
                 event.preventDefault();
 
@@ -1278,7 +1199,6 @@
                 }
 
                 try {
-                    // Show loading state
                     const submitBtn = event.submitter;
                     const originalBtnText = submitBtn.innerHTML;
                     submitBtn.disabled = true;
@@ -1289,21 +1209,17 @@
                         </svg>
                     `;
 
-                    // Create post
                     const result = await createPost(imageFile, caption);
 
                     if (result) {
-                        // Refresh posts
                         const updatedPosts = await fetchUserPosts();
                         if (updatedPosts) {
                             currentPosts = updatedPosts;
                             updatePostsGridUI(currentPosts);
 
-                            // Update post count
                             document.getElementById('postsCount').textContent = currentPosts.length;
                         }
 
-                        // Close modal
                         closeAddPostModal();
                     } else {
                         alert('Failed to create post. Please try again.');
@@ -1312,7 +1228,6 @@
                     console.error('Error creating post:', error);
                     alert('An error occurred. Please try again.');
                 } finally {
-                    // Reset button
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                 }
@@ -1321,19 +1236,16 @@
 
 
 
-        // Function to open the modal
         function openModal() {
             profileEditModal.classList.add('show');
             document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
         }
 
-        // Function to close the modal
         function closeModal() {
             profileEditModal.classList.remove('show');
             document.body.style.overflow = ''; // Re-enable scrolling
         }
 
-        // Update character count for bio
         function updateCharCount() {
             const maxLength = 150;
             const currentLength = bioTextarea.value.length;
@@ -1347,12 +1259,8 @@
             }
         }
 
-        // Handle form submission
         async function handleSubmit() {
-            // event.preventDefault();
-            // console.log("insde hangle submit")
-            // Get form data
-            // const formData = new FormData(profileEditForm);
+
             const profileData = {
                 profileName: document.getElementById('profileName').value,
                 username: document.getElementById('username').value,
@@ -1360,7 +1268,6 @@
                 email: userEmailInNavbar
             };
             console.log("profile data ", profileData)
-            // Validate form data
             if (!profileData.profileName || !profileData.username) {
                 alert('Profile name and username are required');
                 return;
@@ -1372,7 +1279,6 @@
             }
 
             try {
-                // In a real app, you would send this data to your server
                 console.log('Submitting profile data:', profileData);
                 const updateUsernameResponse = await fetch("/updateUsername", {
                     method: "POST",
@@ -1382,35 +1288,18 @@
                     body: JSON.stringify(profileData),
                 });
 
-                // const updateUsernameResponse = await fetch("/updateUsername", { profileData: profileData })
-                // Simulate API call
-                // await new Promise(resolve => setTimeout(resolve, 500));
                 if (updateUsernameResponse.ok) {
 
-                    // Update the UI with the new data
-                    // document.querySelector('h2.text-xl').textContent = profileData.profileName;
-                    // document.querySelector('p.text-gray-600').textContent = `@${profileData.username}`;
-                    // document.querySelector('p.text-gray-700').textContent = profileData.bio;
-
-                    // // Update initials in avatar
-                    // const initials = profileData.profileName.split(' ').map(name => name[0]).join('').toUpperCase();
-                    // document.querySelector('.w-32.h-32.rounded-full').textContent = initials;
-                    // document.querySelector('.w-24.h-24.rounded-full').textContent = initials;
-
-                    // Close the modal
                     closeModal();
 
                 }
-                // Show success message
-                // alert('Profile updated successfully!');
+
             } catch (error) {
                 console.error('Error updating profile:', error);
                 alert('Failed to update profile. Please try again.');
             }
         }
 
-        // Add event listeners
-        // editProfileBtn.addEventListener('click', openModal);
         closeModalBtn.addEventListener('click', closeModal);
         cancelBtn.addEventListener('click', closeModal);
         profileEditModal.addEventListener('click', (event) => {
@@ -1421,10 +1310,8 @@
         bioTextarea.addEventListener('input', updateCharCount);
         profileEditForm.addEventListener('submit', handleSubmit);
 
-        // Initialize character count
         updateCharCount();
 
-        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>

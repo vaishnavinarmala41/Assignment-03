@@ -75,7 +75,6 @@
 </head>
 
 <body class="bg-gray-100">
-    <!-- Navbar -->
     <nav class="bg-white shadow-md">
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex justify-between h-16">
@@ -130,11 +129,9 @@
         </div>
     </nav>
 
-    <!-- Friends Search Modal -->
     <div id="friendsModal" class="friends-modal">
         <div class="p-4">
             <div class="mb-4">
-                <!-- <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3> -->
                 <div class="flex justify-between">
 
                     <h3 class="text-lg font-semibold text-gray-800">Find Friends</h3>
@@ -152,13 +149,11 @@
             </div>
 
             <div id="searchResults" class="space-y-2">
-                <!-- Search results will be populated here -->
                 <div class="text-sm text-gray-500">Search for friends...</div>
             </div>
         </div>
     </div>
 
-    <!-- Content Section -->
     <main class="content-section">
         <div class="max-w-6xl mx-auto px-4 py-6">
             <div id="contentSection">
@@ -242,15 +237,12 @@
         let details_of_user = ""
 
 
-        // Get DOM elements
-        // const editProfileBtn = document.getElementById('editProfileBtn');
         const profileEditModal = document.getElementById('profileEditModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const cancelBtn = document.getElementById('cancelBtn');
         const profileEditForm = document.getElementById('profileEditForm');
         const bioTextarea = document.getElementById('bio');
         const bioCharCount = document.getElementById('bioCharCount');
-        // JWT and session handling functions
         function parseJWT(jwtToken) {
             try {
                 const base64Payload = jwtToken.split('.')[1];
@@ -279,7 +271,6 @@
             initializeuser(userEmailInNavbar)
             fetchUserDetails(userEmailInNavbar)
 
-            // Update UI with user info
             document.getElementById('profileBtn').addEventListener('click', () => {
                 window.location.href = `/myprofile`;
             });
@@ -311,10 +302,8 @@
         }
 
 
-        // Fetch all users for search functionality
         async function fetchAllUsers() {
             try {
-                // Replace with your actual API endpoint
                 const response = await fetch('/api/users');
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
@@ -322,14 +311,12 @@
 
                 const allUsersJson = await response.json();
                 allUsers = allUsersJson.users
-                // console.log("Fetched users:", allUsers);
             } catch (error) {
                 console.error("Error fetching users:", error);
                 allUsers = []; // Set to empty array on error
             }
         }
 
-        // Filter users based on search term (profileName only)
         function filterUsers(searchTerm) {
             if (!searchTerm) return [];
             console.log("search terms ", searchTerm)
@@ -342,7 +329,6 @@
 
 
 
-        // Render search results
         function renderSearchResults(results) {
             const searchResultsContainer = document.getElementById('searchResults');
             console.log("results ", results)
@@ -368,7 +354,6 @@
 
             searchResultsContainer.innerHTML = html;
 
-            // Add click event listeners to user items
             document.querySelectorAll('.user-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const username = item.getAttribute('data-username');
@@ -377,12 +362,10 @@
             });
         }
 
-        // Initialize the page
         async function initPage() {
             await verifyUserSession();
             await fetchAllUsers();
 
-            // Set up event listeners
             const friendsBtn = document.getElementById('friendsBtn');
             const friendsModal = document.getElementById('friendsModal');
             const friendSearch = document.getElementById('friendSearch');
@@ -391,66 +374,53 @@
             const closeSearchForm = document.getElementById('closeSearchForm')
 
 
-            // Friends button toggle modal
             friendsBtn.addEventListener('click', () => {
                 console.log("button clicked")
                 friendsModal.style.display = 'block'
             });
 
-            // Close modal when clicking outside
             closeSearchForm.addEventListener('click', (event) => {
 
                 friendsModal.style.display = 'none'
 
             });
 
-            // Search functionality
             friendSearch.addEventListener('input', (e) => {
                 const searchTerm = e.target.value;
                 const results = filterUsers(searchTerm);
                 renderSearchResults(results);
             });
 
-            // Home button
             homeBtn.addEventListener('click', () => {
                 window.location.href = '/home';
             });
 
-            // Sign out button
             signoutBtn.addEventListener('click', () => {
-                // Clear the token cookie
                 document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                // Redirect to login page
                 window.location.href = '/';
             });
         }
 
-        // Load content into the content section
         function loadContent(htmlContent) {
             document.getElementById('contentSection').innerHTML = htmlContent;
         }
 
-        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', initPage);
 
-        // Make functions available globally for child pages
         window.loadContent = loadContent;
         window.userEmailInNavbar = userEmailInNavbar;
 
 
-        // Function to open the modal
         function openModal() {
             profileEditModal.classList.add('show');
             document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
         }
 
-        // Function to close the modal
         function closeModal() {
             profileEditModal.classList.remove('show');
             document.body.style.overflow = ''; // Re-enable scrolling
         }
 
-        // Update character count for bio
         function updateCharCount() {
             const maxLength = 150;
             const currentLength = bioTextarea.value.length;
@@ -464,12 +434,8 @@
             }
         }
 
-        // Handle form submission
         async function handleSubmit() {
-            // event.preventDefault();
-            // console.log("insde hangle submit")
-            // Get form data
-            // const formData = new FormData(profileEditForm);
+
             const profileData = {
                 profileName: document.getElementById('profileName').value,
                 username: document.getElementById('username').value,
@@ -477,7 +443,6 @@
                 email: userEmailInNavbar
             };
             console.log("profile data ", profileData)
-            // Validate form data
             if (!profileData.profileName || !profileData.username) {
                 alert('Profile name and username are required');
                 return;
@@ -499,35 +464,20 @@
                     body: JSON.stringify(profileData),
                 });
 
-                // const updateUsernameResponse = await fetch("/updateUsername", { profileData: profileData })
-                // Simulate API call
-                // await new Promise(resolve => setTimeout(resolve, 500));
+
                 if (updateUsernameResponse.ok) {
 
-                    // Update the UI with the new data
-                    // document.querySelector('h2.text-xl').textContent = profileData.profileName;
-                    // document.querySelector('p.text-gray-600').textContent = `@${profileData.username}`;
-                    // document.querySelector('p.text-gray-700').textContent = profileData.bio;
 
-                    // // Update initials in avatar
-                    // const initials = profileData.profileName.split(' ').map(name => name[0]).join('').toUpperCase();
-                    // document.querySelector('.w-32.h-32.rounded-full').textContent = initials;
-                    // document.querySelector('.w-24.h-24.rounded-full').textContent = initials;
-
-                    // Close the modal
                     closeModal();
 
                 }
-                // Show success message
-                // alert('Profile updated successfully!');
+
             } catch (error) {
                 console.error('Error updating profile:', error);
                 alert('Failed to update profile. Please try again.');
             }
         }
 
-        // Add event listeners
-        // editProfileBtn.addEventListener('click', openModal);
         closeModalBtn.addEventListener('click', closeModal);
         cancelBtn.addEventListener('click', closeModal);
         profileEditModal.addEventListener('click', (event) => {
@@ -538,14 +488,10 @@
         bioTextarea.addEventListener('input', updateCharCount);
         profileEditForm.addEventListener('submit', handleSubmit);
 
-        // Initialize character count
+
         updateCharCount();
 
-        // If this is being used with the base.html template, you would use:
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     const content = document.querySelector('body').innerHTML;
-        //     window.loadContent(content);
-        // });
+
     </script>
 
 

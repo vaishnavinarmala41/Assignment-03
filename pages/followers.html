@@ -31,9 +31,7 @@
 </head>
 
 <body class="bg-gray-100">
-    <!-- Content Section (This would be inside the content section of base.html) -->
     <div class="max-w-3xl mx-auto px-4 py-6">
-        <!-- Header -->
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center">
                 <a href="/myprofile" id="backButton"
@@ -47,7 +45,6 @@
             </div>
         </div>
 
-        <!-- Loading State -->
         <div id="loadingState" class="bg-white rounded-lg shadow-md p-4">
             <div class="space-y-4">
                 <div class="flex items-center space-x-4">
@@ -77,12 +74,9 @@
             </div>
         </div>
 
-        <!-- Followers List -->
         <div id="followersList" class="bg-white rounded-lg shadow-md hidden">
-            <!-- Followers will be populated here -->
         </div>
 
-        <!-- Empty State -->
         <div id="emptyState" class="bg-white rounded-lg shadow-md p-8 text-center hidden">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -95,13 +89,11 @@
     </div>
 
     <script>
-        // Global variables
         let currentUserData = null;
         let loggedInEmail = '';
         let followers = [];
 
 
-        // JWT and session handling functions
         function parseJWT(jwtToken) {
             try {
                 const base64Payload = jwtToken.split('.')[1];
@@ -130,13 +122,11 @@
             return true;
         }
 
-        // Get username from URL
         function getUsernameFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('username') || loggedInEmail;
         }
 
-        // Fetch user details with followers
         async function fetchUserDetails(email) {
             try {
                 const response = await fetch(`/api/detailsofuser/${email}`);
@@ -155,7 +145,6 @@
             }
         }
 
-        // Fetch followers details
         async function fetchFollowersDetails(userDataFetched) {
             try {
 
@@ -169,7 +158,6 @@
             }
         }
 
-        // Toggle follow status
         async function toggleFollowStatus(username, action) {
             try {
                 const response = await fetch('/api/follow', {
@@ -180,7 +168,7 @@
                     credentials: 'include',
                     body: JSON.stringify({
                         username: username,
-                        action: action // 'follow' or 'unfollow'
+                        action: action
                     })
                 });
 
@@ -195,7 +183,6 @@
             }
         }
 
-        // Format date
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -218,7 +205,6 @@
             }
         }
 
-        // Update followers list UI
         function updateFollowersListUI(followers) {
             const followersList = document.getElementById('followersList');
             const emptyState = document.getElementById('emptyState');
@@ -231,25 +217,20 @@
                 return;
             }
 
-            // Sort followers by date (newest first)
             followers.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             console.log("followers ", followers)
             // Clear existing followers
             followersList.innerHTML = '';
 
-            // Create follower elements
             followers.forEach(follower => {
                 const followerElement = document.createElement('div');
                 followerElement.className = 'p-4 border-b last:border-b-0';
 
-                // Get initials for profile image
                 const initials = follower.username.split(' ').map(name => name[0]).join('').toUpperCase();
 
-                // Check if current user is following this follower
                 const isFollowing = currentUserData.followers_list.some(f => f.username === follower.username);
                 const isCurrentUser = follower.username === loggedInEmail;
 
-                // Create follow button HTML
                 let followButtonHTML = '';
                 if (!isCurrentUser) {
                     if (isFollowing) {
@@ -286,21 +267,17 @@
                 followersList.appendChild(followerElement);
             });
 
-            // Add event listeners to follow buttons
             const followButtons = followersList.querySelectorAll('.follow-btn');
             followButtons.forEach(button => {
                 button.addEventListener('click', async function () {
                     const username = this.dataset.username;
                     const action = this.dataset.action;
 
-                    // Disable button during API call
                     this.disabled = true;
 
-                    // Toggle follow status
                     const result = await toggleFollowStatus(username, action);
 
                     if (result) {
-                        // Update button appearance
                         if (action === 'follow') {
                             this.textContent = 'Following';
                             this.classList.remove('bg-pink-600', 'text-white', 'hover:bg-pink-700');
@@ -319,31 +296,25 @@
                             this.classList.add('bg-pink-600', 'text-white', 'hover:bg-pink-700');
                             this.dataset.action = 'follow';
 
-                            // Remove from following list
                             currentUserData.followers_list = currentUserData.followers_list.filter(f => f.username !== username);
                         }
                     }
 
-                    // Re-enable button
                     this.disabled = false;
                 });
             });
 
-            // Show followers list, hide loading and empty states
             followersList.classList.remove('hidden');
             emptyState.classList.add('hidden');
             loadingState.classList.add('hidden');
         }
 
-        // Initialize page
         async function initPage() {
-            // Verify user session
             const isLoggedIn = await verifyUserSession();
             if (!isLoggedIn) {
                 return;
             }
 
-            // Get username from URL or use logged in username
             // const username = getUsernameFromUrl();
 
             // Set up back button
@@ -355,24 +326,18 @@
             //     }
             // });
 
-            // Fetch user details and followers
             try {
-                // Fetch user data to get following list (to check if current user follows each follower)
                 const userData = await fetchUserDetails(loggedInEmail);
                 if (!userData) {
                     throw new Error('Failed to fetch user data');
                 }
-                // currentUserData = userData;
 
-                // Fetch followers data for the requested username
                 const followersData = await fetchFollowersDetails(currentUserData);
 
-                // Update UI
                 updateFollowersListUI(followersData);
             } catch (error) {
                 console.error('Error initializing page:', error);
 
-                // Show error state
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('followersList').classList.add('hidden');
                 document.getElementById('emptyState').classList.remove('hidden');
@@ -393,7 +358,6 @@
             }
         }
 
-        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>
